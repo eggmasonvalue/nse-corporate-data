@@ -1,9 +1,9 @@
 import sys
 import logging
-from pathlib import Path
 import click
 from datetime import datetime
-from further_issue_tracker.renderer import discover_root_json_files, render_json_file
+from further_issue_tracker.fetcher import NSEFetcher
+from further_issue_tracker.parser import parse_filings_data, save_to_json
 
 # Configure silent execution by routing logs to a file
 logging.basicConfig(
@@ -41,14 +41,6 @@ def cli():
     pass
 
 
-def _render_paths(paths: list[Path]) -> None:
-    for path in paths:
-        if not path.exists():
-            logger.warning("Skipping missing JSON artifact: %s", path)
-            continue
-        render_json_file(path)
-
-
 @cli.command()
 @click.option(
     "--from-date",
@@ -79,9 +71,6 @@ def fetch(from_date, to_date, category):
     sys.stderr = DevNull()
 
     try:
-        from further_issue_tracker.fetcher import NSEFetcher
-        from further_issue_tracker.parser import parse_filings_data, save_to_json
-
         dt_from = datetime.strptime(from_date, "%d-%m-%Y")
         dt_to = datetime.strptime(to_date, "%d-%m-%Y")
         if dt_from > dt_to:
@@ -106,29 +95,12 @@ def fetch(from_date, to_date, category):
 
                 output_filename = f"{cat.lower()}_data.json"
                 save_to_json(parsed_records, output_filename)
-                render_json_file(output_filename)
                 logger.info(f"Successfully saved {cat} data to {output_filename}")
         finally:
             fetcher.close()
 
     except Exception as e:
         logger.error(f"Execution failed: {e}")
-
-
-@cli.command()
-@click.argument("inputs", nargs=-1, type=click.Path(path_type=Path))
-def render(inputs):
-    """
-    Render root JSON artifacts into self-contained HTML views.
-
-    When no inputs are provided, the command renders all `*_data.json` files in the
-    current working directory.
-    """
-    try:
-        paths = list(inputs) if inputs else discover_root_json_files(".")
-        _render_paths(paths)
-    except Exception as e:
-        logger.error(f"Render failed: {e}")
 
 
 if __name__ == "__main__":
