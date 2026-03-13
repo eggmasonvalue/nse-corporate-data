@@ -74,8 +74,20 @@ def parse_filings_data(
     }
 
     for rec in records:
+        symbol = rec["symbol"]
         xbrl_values = [rec["xbrl_dict"].get(k) for k in sorted_xbrl_keys]
-        results["data"][rec["symbol"]] = {"api": rec["base_row"], "xbrl": xbrl_values}
+        
+        # Fetch CMP
+        cmp = None
+        quote_data = fetcher.get_quote(symbol)
+        if quote_data and "priceInfo" in quote_data:
+            cmp = quote_data["priceInfo"].get("lastPrice")
+        
+        results["data"][symbol] = {
+            "api": rec["base_row"],
+            "xbrl": xbrl_values,
+            "CMP": cmp
+        }
 
     return results
 

@@ -84,5 +84,17 @@ class NSEFetcher:
             logger.error(f"Failed to download XBRL file from {xbrl_url}: {e}")
             return None
 
+    def get_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """
+        Fetch the current quote for a given equity symbol.
+        """
+        if not symbol:
+            return None
+        try:
+            return self.nse.quote(symbol)
+        except Exception as e:
+            logger.error(f"Failed to fetch quote for {symbol}: {e}")
+            return None
+
     def close(self):
         self.nse.exit()

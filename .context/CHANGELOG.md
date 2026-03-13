@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Added Current Market Price (CMP) fetching for stock symbols in corporate filings using the `nse` dependency's `quote` method.
 - Improved CLI `fetch` command to return a minimal JSON object with essential results (`files` or `error`).
 - Implemented stdout/stderr redirection to the log file during CLI execution to ensure clean JSON output while capturing external messages.
 - Switched the `nse-xbrl-parser` dependency source from a local path checkout to the GitHub HTTPS repository URL.
