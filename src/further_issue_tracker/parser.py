@@ -81,7 +81,7 @@ def parse_filings_data(
         cmp = None
         quote_data = fetcher.get_quote(symbol)
         if quote_data and "priceInfo" in quote_data:
-            cmp = quote_data["priceInfo"].get("lastPrice")
+            cmp = quote_data["priceInfo"].get("close")
         
         results["data"][symbol] = {
             "api": rec["base_row"],
