@@ -1,4 +1,6 @@
 import logging
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from nse import NSE
@@ -7,9 +9,15 @@ logger = logging.getLogger(__name__)
 
 
 class NSEFetcher:
-    def __init__(self, download_folder: str = "/tmp"):
-        self.download_folder = Path(download_folder)
-        self.download_folder.mkdir(parents=True, exist_ok=True)
+    def __init__(self, download_folder: Optional[str] = None):
+        if download_folder is None:
+            self._temp_dir = tempfile.mkdtemp(prefix="further_issue_tracker_")
+            self.download_folder = Path(self._temp_dir)
+        else:
+            self._temp_dir = None
+            self.download_folder = Path(download_folder)
+            self.download_folder.mkdir(parents=True, exist_ok=True)
+
         self.nse = NSE(download_folder=str(self.download_folder), server=True)
 
         # Initialize cookies
@@ -98,3 +106,9 @@ class NSEFetcher:
 
     def close(self):
         self.nse.exit()
+        if self._temp_dir and Path(self._temp_dir).exists():
+            try:
+                shutil.rmtree(self._temp_dir)
+                logger.debug(f"Deleted temporary directory: {self._temp_dir}")
+            except Exception as e:
+                logger.error(f"Failed to delete temporary directory {self._temp_dir}: {e}")
