@@ -14,7 +14,7 @@ def parse_filings_data(
     with "metadata" (headers) and "data" (mapping of symbol to row values).
     """
     if not filings:
-        return {"metadata": [], "data": {}}
+        return {"metadata": [], "data": []}
 
     # Dynamically extract all unique API keys from NSE JSON payloads
     unique_api_keys = set()
@@ -30,23 +30,11 @@ def parse_filings_data(
     for item in filings:
         base_row = [item.get(key) for key in sorted_api_keys]
 
-        symbol = (
-            item.get("nseSymbol")
-            or item.get("nsesymbol")
-            or item.get("symbol")
-            or item.get("nameOfTheCompany")
-            or item.get("companyName")
-            or item.get("appId")
-        )
+        symbol = item.get("nseSymbol") or item.get("nsesymbol")
         if not symbol:
             symbol = "UNKNOWN"
 
-        xbrl_url = (
-            item.get("xmlFileName")
-            or item.get("xbrl")
-            or item.get("xbrlFile")
-            or item.get("attachment")
-        )
+        xbrl_url = item.get("xmlFileName")
         parsed_xbrl = {}
 
         if xbrl_url:
@@ -76,29 +64,38 @@ def parse_filings_data(
             "api": sorted_api_keys,
             "xbrl": sorted_xbrl_keys,
             "industry": industry_metadata,
+            "CMP": ["CMP"],
         },
-        "data": {},
+        "data": [],
     }
+
+    quote_cache = {}
 
     for rec in records:
         symbol = rec["symbol"]
         xbrl_values = [rec["xbrl_dict"].get(k) for k in sorted_xbrl_keys]
-        
+
         # Fetch CMP
         cmp = None
-        quote_data = fetcher.get_quote(symbol)
-        if quote_data and "priceInfo" in quote_data:
-            cmp = quote_data["priceInfo"].get("close")
-        
+        if symbol != "UNKNOWN":
+            if symbol not in quote_cache:
+                quote_cache[symbol] = fetcher.get_quote(symbol)
+            quote_data = quote_cache[symbol]
+            if quote_data and "priceInfo" in quote_data:
+                cmp = quote_data["priceInfo"].get("close")
+
         # Get industry data for this symbol
         industry_values = industry_map.get(symbol, [])
-        
-        results["data"][symbol] = {
-            "api": rec["base_row"],
-            "xbrl": xbrl_values,
-            "industry": industry_values,
-            "CMP": cmp
-        }
+
+        results["data"].append(
+            {
+                "symbol": symbol,
+                "api": rec["base_row"],
+                "xbrl": xbrl_values,
+                "industry": industry_values,
+                "CMP": cmp,
+            }
+        )
 
     return results
 
@@ -107,5 +104,5 @@ def save_to_json(data: Dict[str, Any], output_path: str):
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, default=str)
 
-    count = len(data.get("data", {}))
-    logger.info(f"Saved {count} unique records to {output_path}")
+    count = len(data.get("data", []))
+    logger.info(f"Saved {count} records to {output_path}")

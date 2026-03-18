@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class LogWriter:
     """Redirects writes to the logger."""
+
     def __init__(self, level):
         self.level = level
 
@@ -28,6 +29,7 @@ class LogWriter:
 
     def flush(self):
         pass
+
 
 def validate_date(ctx, param, value):
     try:

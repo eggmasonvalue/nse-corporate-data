@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from further_issue_tracker.fetcher import NSEFetcher
 
+
 def test_fetcher_creates_and_deletes_temp_dir():
     # Arrange & Act
     fetcher = NSEFetcher()
@@ -17,6 +18,7 @@ def test_fetcher_creates_and_deletes_temp_dir():
 
     # Assert
     assert not os.path.exists(temp_dir_path)
+
 
 def test_fetcher_uses_provided_download_folder(tmp_path):
     # Arrange

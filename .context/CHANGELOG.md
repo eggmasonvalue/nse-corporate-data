@@ -1,7 +1,10 @@
 # Changelog
 ## [Unreleased]
+
+## [0.3.0] - 2026-03-18
+- Added `tenacity` dependency and implemented a retry mechanism for NSE API failures (`TimeoutError`, `ConnectionError`, and status codes 408, 429, 502, 503, 504).
+- Added `CMP` to the metadata dictionary so that the Current Market Price entry is commensurate with best practices.
 - Added four-level industry mapping (Macro, Sector, Industry, Basic Industry) for all stocks in the output, fetched from `eggmasonvalue/stock-industry-map-in`.
-- Updated samples for March 1 to March 15, 2026.
 - Added Current Market Price (CMP) fetching for stock symbols in corporate filings using the `nse` dependency's `quote` method.
 ...
 - Improved CLI `fetch` command to return a minimal JSON object with essential results (`files` or `error`).

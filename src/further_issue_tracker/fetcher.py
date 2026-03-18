@@ -1,10 +1,11 @@
 import logging
 import json
-import shutil
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from nse import NSE
+
+from .retries import retry_exchange, should_retry_exception
 
 logger = logging.getLogger(__name__)
 
@@ -12,9 +13,13 @@ logger = logging.getLogger(__name__)
 class NSEFetcher:
     def __init__(self, download_folder: Optional[str] = None):
         if download_folder is None:
-            self._temp_dir = tempfile.mkdtemp(prefix="further_issue_tracker_")
+            self._temp_dir_obj = tempfile.TemporaryDirectory(
+                prefix="further_issue_tracker_"
+            )
+            self._temp_dir = self._temp_dir_obj.name
             self.download_folder = Path(self._temp_dir)
         else:
+            self._temp_dir_obj = None
             self._temp_dir = None
             self.download_folder = Path(download_folder)
             self.download_folder.mkdir(parents=True, exist_ok=True)
@@ -31,6 +36,7 @@ class NSEFetcher:
         except Exception as e:
             logger.error(f"Failed to initialize NSE session: {e}")
 
+    @retry_exchange
     def fetch_corporate_filings(
         self, category: str, from_date: str, to_date: str
     ) -> List[Dict[str, Any]]:
@@ -59,9 +65,12 @@ class NSEFetcher:
             logger.info(f"Found {len(data)} items for {category}")
             return data
         except Exception as e:
+            if should_retry_exception(e):
+                raise e
             logger.error(f"Error fetching {category} filings: {e}")
             return []
 
+    @retry_exchange
     def download_xbrl_file(self, xbrl_url: str) -> Optional[Path]:
         """
         Download the XBRL XML file from the given URL.
@@ -91,9 +100,12 @@ class NSEFetcher:
                         f.write(chunk)
             return save_path
         except Exception as e:
+            if should_retry_exception(e):
+                raise e
             logger.error(f"Failed to download XBRL file from {xbrl_url}: {e}")
             return None
 
+    @retry_exchange
     def get_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
         """
         Fetch the current quote for a given equity symbol.
@@ -103,6 +115,8 @@ class NSEFetcher:
         try:
             return self.nse.quote(symbol)
         except Exception as e:
+            if should_retry_exception(e):
+                raise e
             logger.error(f"Failed to fetch quote for {symbol}: {e}")
             return None
 
@@ -114,9 +128,11 @@ class NSEFetcher:
         if self._industry_data_cache:
             return self._industry_data_cache
 
-        cache_path = Path(".industry_cache.json")
+        cache_dir = Path.home() / ".further_issue_tracker"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_path = cache_dir / "industry_cache.json"
         url = "https://raw.githubusercontent.com/eggmasonvalue/stock-industry-map-in/main/out/industry_data.json"
-        
+
         headers = {}
         cached_data = {"metadata": [], "data": {}, "etag": None}
 
@@ -132,28 +148,32 @@ class NSEFetcher:
         logger.info("Checking for industry data updates...")
         try:
             response = self.nse._session.get(url, headers=headers, timeout=15)
-            
+
             if response.status_code == 304:
                 logger.info("Industry data is up to date (304 Not Modified)")
                 self._industry_data_cache = {
                     "metadata": cached_data.get("metadata", []),
-                    "data": cached_data.get("data", {})
+                    "data": cached_data.get("data", {}),
                 }
                 return self._industry_data_cache
 
             response.raise_for_status()
-            
+
             new_data = response.json()
             etag = response.headers.get("ETag")
-            
+
             # Update local cache file
             with open(cache_path, "w", encoding="utf-8") as f:
-                json.dump({
-                    "metadata": new_data.get("metadata", []),
-                    "data": new_data.get("data", {}),
-                    "etag": etag
-                }, f, indent=2)
-            
+                json.dump(
+                    {
+                        "metadata": new_data.get("metadata", []),
+                        "data": new_data.get("data", {}),
+                        "etag": etag,
+                    },
+                    f,
+                    indent=2,
+                )
+
             logger.info("Industry data updated and cached.")
             self._industry_data_cache = new_data
             return self._industry_data_cache
@@ -165,15 +185,17 @@ class NSEFetcher:
                 logger.info("Falling back to local industry cache.")
                 return {
                     "metadata": cached_data.get("metadata", []),
-                    "data": cached_data.get("data", {})
+                    "data": cached_data.get("data", {}),
                 }
             return {"metadata": [], "data": {}}
 
     def close(self):
         self.nse.exit()
-        if self._temp_dir and Path(self._temp_dir).exists():
+        if hasattr(self, "_temp_dir_obj") and self._temp_dir_obj:
             try:
-                shutil.rmtree(self._temp_dir)
+                self._temp_dir_obj.cleanup()
                 logger.debug(f"Deleted temporary directory: {self._temp_dir}")
             except Exception as e:
-                logger.error(f"Failed to delete temporary directory {self._temp_dir}: {e}")
+                logger.error(
+                    f"Failed to delete temporary directory {self._temp_dir}: {e}"
+                )

@@ -16,3 +16,13 @@ scratchpad.md
 *.pkl
 
 *.log
+
+# temporary folders
+tmp/
+
+# Ignore all json files
+*.json
+
+# Allow json files in the samples directory
+!samples/*.json
+
