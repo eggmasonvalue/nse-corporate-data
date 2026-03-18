@@ -67,9 +67,16 @@ def parse_filings_data(
 
     # PASS 2: Construct metadata and flattened data arrays
     sorted_xbrl_keys = sorted(list(unique_xbrl_keys))
+    industry_data = fetcher.get_industry_data()
+    industry_metadata = industry_data.get("metadata", [])
+    industry_map = industry_data.get("data", {})
 
     results = {
-        "metadata": {"api": sorted_api_keys, "xbrl": sorted_xbrl_keys},
+        "metadata": {
+            "api": sorted_api_keys,
+            "xbrl": sorted_xbrl_keys,
+            "industry": industry_metadata,
+        },
         "data": {},
     }
 
@@ -83,9 +90,13 @@ def parse_filings_data(
         if quote_data and "priceInfo" in quote_data:
             cmp = quote_data["priceInfo"].get("close")
         
+        # Get industry data for this symbol
+        industry_values = industry_map.get(symbol, [])
+        
         results["data"][symbol] = {
             "api": rec["base_row"],
             "xbrl": xbrl_values,
+            "industry": industry_values,
             "CMP": cmp
         }
 

@@ -10,6 +10,7 @@ graph TD
         cli --> fetcher
         cli --> parser
         fetcher --> nse[NSE API]
+        fetcher --> industry[stock-industry-map-in GitHub]
         parser --> nsexbrl[nse_xbrl_parser]
         parser --> json[JSON artifacts]
     end

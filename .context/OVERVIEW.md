@@ -6,7 +6,7 @@ Track preferential allotments, rights issues, and QIPs (Qualified Institutional 
 ## Description
 A tool designed to monitor and track further issues of companies listed on the National Stock Exchange (NSE) of India.
 
-The implemented CLI currently supports preferential allotments (`PREF`) and QIPs (`QIP`) by fetching filing metadata from NSE, downloading linked XBRL documents, and writing normalized JSON output.
+The implemented CLI currently supports preferential allotments (`PREF`) and QIPs (`QIP`) by fetching filing metadata from NSE, downloading linked XBRL documents, fetching four-level industry mapping from `eggmasonvalue/stock-industry-map-in`, and writing normalized JSON output.
 
 The project depends on `nse-xbrl-parser`, resolved by `uv` from the GitHub HTTPS repository at `https://github.com/eggmasonvalue/nse-xbrl-parser.git`.
 

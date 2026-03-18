@@ -1,4 +1,5 @@
 import logging
+import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -22,6 +23,7 @@ class NSEFetcher:
 
         # Initialize cookies
         self._init_session()
+        self._industry_data_cache: Optional[Dict[str, Any]] = None
 
     def _init_session(self):
         try:
@@ -103,6 +105,69 @@ class NSEFetcher:
         except Exception as e:
             logger.error(f"Failed to fetch quote for {symbol}: {e}")
             return None
+
+    def get_industry_data(self) -> Dict[str, Any]:
+        """
+        Fetch industry data from the eggmasonvalue/stock-industry-map-in repository
+        using ETag for lazy/conditional downloading.
+        """
+        if self._industry_data_cache:
+            return self._industry_data_cache
+
+        cache_path = Path(".industry_cache.json")
+        url = "https://raw.githubusercontent.com/eggmasonvalue/stock-industry-map-in/main/out/industry_data.json"
+        
+        headers = {}
+        cached_data = {"metadata": [], "data": {}, "etag": None}
+
+        if cache_path.exists():
+            try:
+                with open(cache_path, "r", encoding="utf-8") as f:
+                    cached_data = json.load(f)
+                    if cached_data.get("etag"):
+                        headers["If-None-Match"] = cached_data["etag"]
+            except Exception as e:
+                logger.warning(f"Failed to read industry cache: {e}")
+
+        logger.info("Checking for industry data updates...")
+        try:
+            response = self.nse._session.get(url, headers=headers, timeout=15)
+            
+            if response.status_code == 304:
+                logger.info("Industry data is up to date (304 Not Modified)")
+                self._industry_data_cache = {
+                    "metadata": cached_data.get("metadata", []),
+                    "data": cached_data.get("data", {})
+                }
+                return self._industry_data_cache
+
+            response.raise_for_status()
+            
+            new_data = response.json()
+            etag = response.headers.get("ETag")
+            
+            # Update local cache file
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump({
+                    "metadata": new_data.get("metadata", []),
+                    "data": new_data.get("data", {}),
+                    "etag": etag
+                }, f, indent=2)
+            
+            logger.info("Industry data updated and cached.")
+            self._industry_data_cache = new_data
+            return self._industry_data_cache
+
+        except Exception as e:
+            logger.error(f"Failed to fetch/update industry data: {e}")
+            # Fallback to cache if available
+            if cached_data.get("data"):
+                logger.info("Falling back to local industry cache.")
+                return {
+                    "metadata": cached_data.get("metadata", []),
+                    "data": cached_data.get("data", {})
+                }
+            return {"metadata": [], "data": {}}
 
     def close(self):
         self.nse.exit()

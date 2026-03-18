@@ -14,7 +14,8 @@ For each filing, the CLI:
 1. Calls the relevant NSE corporate filings API for a date range.
 2. Downloads the linked XBRL document when one is present.
 3. Parses the XBRL into a flat dictionary using `nse-xbrl-parser`.
-4. Writes normalized JSON output files for downstream processing.
+4. Fetches four-level industry mapping (Macro, Sector, Industry, Basic Industry) from `eggmasonvalue/stock-industry-map-in`.
+5. Writes normalized JSON output files for downstream processing.
 
 ## Requirements
 
@@ -67,12 +68,15 @@ Output shape:
 {
   "metadata": {
     "api": ["..."],
-    "xbrl": ["..."]
+    "xbrl": ["..."],
+    "industry": ["Macro", "Sector", "Industry", "Basic Industry"]
   },
   "data": {
     "SYMBOL": {
       "api": ["..."],
-      "xbrl": ["..."]
+      "xbrl": ["..."],
+      "industry": ["...", "...", "...", "..."],
+      "CMP": 123.45
     }
   }
 }
@@ -80,8 +84,11 @@ Output shape:
 
 - `metadata.api`: sorted keys observed in the NSE API payload
 - `metadata.xbrl`: sorted keys observed across parsed XBRL documents
+- `metadata.industry`: labels for the four-level industry classification
 - `data[SYMBOL].api`: row values aligned to `metadata.api`
 - `data[SYMBOL].xbrl`: row values aligned to `metadata.xbrl`
+- `data[SYMBOL].industry`: classification values aligned to `metadata.industry`
+- `data[SYMBOL].CMP`: current market price (last close) for the symbol
 
 ## Project Structure
 
