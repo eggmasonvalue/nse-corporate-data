@@ -1,5 +1,13 @@
 # Changelog
 ## [Unreleased]
+- Renamed the project/package surface to `nse-corporate-data` / `nse_corporate_data`.
+- Replaced the old single `fetch` command with `further-issues` and `insider-trading`.
+- Changed the further-issues CLI option from `--category` to `--categories`.
+- Added a default `--to-date` of the local run date for both CLI workflows.
+- Added a default `--categories` value of `BOTH` for further-issues.
+- Added insider trading ingestion using the NSE `corporates-pit` endpoint, XBRL download, industry enrichment, and CMP enrichment.
+- Added tests covering CLI defaults, date-range validation, and generic parser behavior.
+- Documented the temporary insider-trading XBRL parsing limitation caused by upstream NSE taxonomy issues.
 
 ## [0.3.0] - 2026-03-18
 - Added `tenacity` dependency and implemented a retry mechanism for NSE API failures (`TimeoutError`, `ConnectionError`, and status codes 408, 429, 502, 503, 504).

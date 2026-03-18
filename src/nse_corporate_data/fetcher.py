@@ -14,7 +14,7 @@ class NSEFetcher:
     def __init__(self, download_folder: Optional[str] = None):
         if download_folder is None:
             self._temp_dir_obj = tempfile.TemporaryDirectory(
-                prefix="further_issue_tracker_"
+                prefix="nse_corporate_data_"
             )
             self._temp_dir = self._temp_dir_obj.name
             self.download_folder = Path(self._temp_dir)
@@ -55,19 +55,38 @@ class NSEFetcher:
         else:
             raise ValueError(f"Unknown category: {category}")
 
+        return self._fetch_json_rows(url, referer, f"{category} filings")
+
+    @retry_exchange
+    def fetch_insider_trading(
+        self, from_date: str, to_date: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Fetch insider trading disclosures within a date range.
+        Dates should be in DD-MM-YYYY format.
+        """
+        url = f"https://www.nseindia.com/api/corporates-pit?index=equities&from_date={from_date}&to_date={to_date}"
+        referer = (
+            "https://www.nseindia.com/companies-listing/corporate-filings-insider-trading"
+        )
+        return self._fetch_json_rows(url, referer, "insider trading filings")
+
+    def _fetch_json_rows(
+        self, url: str, referer: str, label: str
+    ) -> List[Dict[str, Any]]:
         headers = {"Referer": referer, "Accept": "*/*"}
 
-        logger.info(f"Fetching {category} filings from {from_date} to {to_date}")
+        logger.info(f"Fetching {label} from {url}")
         try:
             response = self.nse._session.get(url, headers=headers, timeout=15)
             response.raise_for_status()
             data = response.json().get("data", [])
-            logger.info(f"Found {len(data)} items for {category}")
+            logger.info(f"Found {len(data)} items for {label}")
             return data
         except Exception as e:
             if should_retry_exception(e):
                 raise e
-            logger.error(f"Error fetching {category} filings: {e}")
+            logger.error(f"Error fetching {label}: {e}")
             return []
 
     @retry_exchange
@@ -128,7 +147,7 @@ class NSEFetcher:
         if self._industry_data_cache:
             return self._industry_data_cache
 
-        cache_dir = Path.home() / ".further_issue_tracker"
+        cache_dir = Path.home() / ".nse_corporate_data"
         cache_dir.mkdir(parents=True, exist_ok=True)
         cache_path = cache_dir / "industry_cache.json"
         url = "https://raw.githubusercontent.com/eggmasonvalue/stock-industry-map-in/main/out/industry_data.json"

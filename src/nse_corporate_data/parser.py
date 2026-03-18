@@ -1,20 +1,43 @@
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List, Optional
 from nse_xbrl_parser import parse_xbrl_file
 
 logger = logging.getLogger(__name__)
 
 
+def _empty_results() -> Dict[str, Any]:
+    return {
+        "metadata": {
+            "api": [],
+            "xbrl": [],
+            "industry": [],
+            "CMP": ["CMP"],
+        },
+        "data": [],
+    }
+
+
+def _resolve_first(item: Dict[str, Any], keys: Iterable[str]) -> Optional[Any]:
+    for key in keys:
+        value = item.get(key)
+        if value:
+            return value
+    return None
+
+
 def parse_filings_data(
-    category: str, filings: List[Dict[str, Any]], fetcher: Any
+    filings: List[Dict[str, Any]],
+    fetcher: Any,
+    symbol_keys: Iterable[str],
+    xbrl_keys: Iterable[str],
 ) -> Dict[str, Any]:
     """
     Given a list of JSON payload items from NSE, extract metadata into a dict
-    with "metadata" (headers) and "data" (mapping of symbol to row values).
+    with "metadata" headers and normalized row data.
     """
     if not filings:
-        return {"metadata": [], "data": []}
+        return _empty_results()
 
     # Dynamically extract all unique API keys from NSE JSON payloads
     unique_api_keys = set()
@@ -30,11 +53,11 @@ def parse_filings_data(
     for item in filings:
         base_row = [item.get(key) for key in sorted_api_keys]
 
-        symbol = item.get("nseSymbol") or item.get("nsesymbol")
+        symbol = _resolve_first(item, symbol_keys)
         if not symbol:
             symbol = "UNKNOWN"
 
-        xbrl_url = item.get("xmlFileName")
+        xbrl_url = _resolve_first(item, xbrl_keys)
         parsed_xbrl = {}
 
         if xbrl_url:

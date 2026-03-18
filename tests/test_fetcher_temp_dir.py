@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from further_issue_tracker.fetcher import NSEFetcher
+from nse_corporate_data.fetcher import NSEFetcher
 
 
 def test_fetcher_creates_and_deletes_temp_dir():

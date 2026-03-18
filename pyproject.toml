@@ -1,5 +1,5 @@
 [project]
-name = "further-issue-tracker"
+name = "nse-corporate-data"
 version = "0.3.0"
 description = "Add your description here"
 readme = "README.md"
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-further-issue-tracker = "further_issue_tracker.cli:cli"
+nse-corporate-data = "nse_corporate_data.cli:cli"
 
 [build-system]
 requires = ["uv_build>=0.9.26,<0.10.0"]

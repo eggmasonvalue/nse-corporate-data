@@ -226,43 +226,6 @@ wheels = [
 ]
 
 [[package]]
-name = "further-issue-tracker"
-version = "0.3.0"
-source = { editable = "." }
-dependencies = [
-    { name = "click" },
-    { name = "nse", extra = ["server"] },
-    { name = "nse-xbrl-parser" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "tenacity" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "click", specifier = ">=8.3.1" },
-    { name = "nse", extras = ["server"], specifier = ">=2.1.0" },
-    { name = "nse-xbrl-parser", git = "https://github.com/eggmasonvalue/nse-xbrl-parser.git" },
-    { name = "pydantic", specifier = ">=2.12.5" },
-    { name = "pydantic-settings", specifier = ">=2.13.1" },
-    { name = "tenacity", specifier = ">=9.1.4" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "ruff", specifier = ">=0.15.5" },
-]
-
-[[package]]
 name = "h11"
 version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -502,6 +465,43 @@ wheels = [
 [package.optional-dependencies]
 server = [
     { name = "httpx", extra = ["http2"] },
+]
+
+[[package]]
+name = "nse-corporate-data"
+version = "0.3.0"
+source = { editable = "." }
+dependencies = [
+    { name = "click" },
+    { name = "nse", extra = ["server"] },
+    { name = "nse-xbrl-parser" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "tenacity" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "click", specifier = ">=8.3.1" },
+    { name = "nse", extras = ["server"], specifier = ">=2.1.0" },
+    { name = "nse-xbrl-parser", git = "https://github.com/eggmasonvalue/nse-xbrl-parser.git" },
+    { name = "pydantic", specifier = ">=2.12.5" },
+    { name = "pydantic-settings", specifier = ">=2.13.1" },
+    { name = "tenacity", specifier = ">=9.1.4" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "ruff", specifier = ">=0.15.5" },
 ]
 
 [[package]]
