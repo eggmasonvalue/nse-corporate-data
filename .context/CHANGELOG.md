@@ -1,5 +1,6 @@
 # Changelog
 ## [Unreleased]
+- Added ordered NSE series fallback (`EQ`, `BE`, `BZ`, `SM`, `ST`, `SZ`) for `getDetailedScripData()` when the default series returns an empty `equityResponse` shell.
 - Replaced the canonical `CMP` field with a richer `marketData` block containing `currentPrice`, `sharesOutstanding`, `freeFloatMarketCap`, `priceToEarnings`, `fiftyTwoWeekHigh`, and `fiftyTwoWeekLow`.
 - Switched canonical market enrichment from `nse.quote()` to `nse.getDetailedScripData()`.
 - Renamed shortened-artifact price context from `CMP` to `currentPrice`.

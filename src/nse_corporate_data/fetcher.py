@@ -2,7 +2,7 @@ import logging
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 from nse import NSE
 
 from .retries import retry_exchange, should_retry_exception
@@ -16,6 +16,7 @@ MARKET_DATA_METADATA = [
     "fiftyTwoWeekHigh",
     "fiftyTwoWeekLow",
 ]
+VALID_SERIES: Sequence[str] = ("EQ", "BE", "BZ", "SM", "ST", "SZ")
 
 
 class NSEFetcher:
@@ -140,16 +141,57 @@ class NSEFetcher:
             return None
         if symbol in self._market_data_cache:
             return self._market_data_cache[symbol]
-        try:
-            market_data = self.nse.getDetailedScripData(symbol)
-            self._market_data_cache[symbol] = market_data
-            return market_data
-        except Exception as e:
-            if should_retry_exception(e):
-                raise e
-            logger.error(f"Failed to fetch market data for {symbol}: {e}")
-            self._market_data_cache[symbol] = None
-            return None
+        last_error: Optional[Exception] = None
+        for series in VALID_SERIES:
+            try:
+                market_data = self.nse.getDetailedScripData(symbol, series=series)
+                if self._has_usable_market_data(market_data):
+                    logger.debug(
+                        "Fetched market data for %s using series %s", symbol, series
+                    )
+                    self._market_data_cache[symbol] = market_data
+                    return market_data
+                logger.info(
+                    "Market data for %s returned empty for series %s; trying next series",
+                    symbol,
+                    series,
+                )
+            except Exception as e:
+                if should_retry_exception(e):
+                    raise e
+                last_error = e
+                logger.warning(
+                    "Market data fetch for %s failed for series %s: %s",
+                    symbol,
+                    series,
+                    e,
+                )
+        if last_error is not None:
+            logger.error(f"Failed to fetch market data for {symbol}: {last_error}")
+        else:
+            logger.error(
+                "Failed to fetch market data for %s: no usable response for any series",
+                symbol,
+            )
+        self._market_data_cache[symbol] = None
+        return None
+
+    @staticmethod
+    def _has_usable_market_data(market_data: Optional[Dict[str, Any]]) -> bool:
+        if not market_data:
+            return False
+        equity_response = market_data.get("equityResponse")
+        if not isinstance(equity_response, list) or not equity_response:
+            return False
+
+        for entry in equity_response:
+            if not isinstance(entry, dict):
+                continue
+            for key in ("metaData", "tradeInfo", "priceInfo", "secInfo"):
+                value = entry.get(key)
+                if isinstance(value, dict) and value:
+                    return True
+        return False
 
     def get_industry_data(self) -> Dict[str, Any]:
         """

@@ -13,7 +13,7 @@ The implemented CLI currently supports two workflows:
 - `insider-trading fetch`: insider trading disclosures
 - `insider-trading shorten`: compact signal-focused insider JSON derived from the full artifact
 
-Each workflow fetches filing metadata from NSE, downloads linked XBRL documents, enriches rows with four-level industry mapping from `eggmasonvalue/stock-industry-map-in`, fetches a compact market-data snapshot for stock symbols, and writes normalized JSON output. For insider trading, market-data fetches are limited to `Market Purchase` and `Market Sale` rows. Robust retry mechanisms (via `tenacity`) ensure consistency during API flakes.
+Each workflow fetches filing metadata from NSE, downloads linked XBRL documents, enriches rows with four-level industry mapping from `eggmasonvalue/stock-industry-map-in`, fetches a compact market-data snapshot for stock symbols, and writes normalized JSON output. For insider trading, market-data fetches are limited to `Market Purchase` and `Market Sale` rows. Robust retry mechanisms (via `tenacity`) ensure consistency during API flakes. Detailed scrip-data fetches now walk valid NSE series values when the default series returns an empty shell response.
 
 For insider trading, XBRL processing is optional and controlled by configuration; it is disabled by default because the API payload is currently sufficient.
 

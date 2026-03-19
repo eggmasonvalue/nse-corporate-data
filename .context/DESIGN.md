@@ -8,6 +8,7 @@
 - Implemented: Four-level industry mapping (Macro, Sector, Industry, Basic Industry) integration
 - Implemented: Compact market-data snapshot fetching for stock symbols via `getDetailedScripData`
 - Implemented: Per-symbol market-data caching to avoid repeated NSE requests inside a run
+- Implemented: Ordered fallback across valid NSE series values when `getDetailedScripData` returns an empty shell response for the default series
 - Implemented: Insider-trading market-data fetch limited to `Market Purchase` and `Market Sale` rows
 - Implemented: `currentPrice` priority of `closePrice`, then `lastPrice`, then `previousClose`
 - Implemented: Tenacity-based retry mechanism for resilient API requests

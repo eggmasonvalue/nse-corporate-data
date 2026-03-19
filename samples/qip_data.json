@@ -177,9 +177,9 @@
         "Residential, Commercial Projects"
       ],
       "marketData": [
-        302.15,
+        305,
         124997388,
-        9125192540.99,
+        9199184669.82,
         "44.81",
         321,
         137
@@ -318,12 +318,12 @@
         "IT Enabled Services"
       ],
       "marketData": [
+        2292.4,
+        20554989,
+        18963076139.99,
         null,
-        null,
-        null,
-        null,
-        null,
-        null
+        3894.7,
+        1732.1
       ]
     }
   ]

@@ -47,7 +47,7 @@ def test_get_market_data_uses_fetcher_cache():
     fetcher = NSEFetcher.__new__(NSEFetcher)
     fetcher._market_data_cache = {}
     fetcher.nse = SimpleNamespace(
-        getDetailedScripData=lambda symbol: calls.append(symbol)
+        getDetailedScripData=lambda symbol, series="EQ": calls.append((symbol, series))
         or {"equityResponse": [{"tradeInfo": {"lastPrice": 123.45}}]}
     )
 
@@ -58,4 +58,57 @@ def test_get_market_data_uses_fetcher_cache():
     # Assert
     assert first == {"equityResponse": [{"tradeInfo": {"lastPrice": 123.45}}]}
     assert second == {"equityResponse": [{"tradeInfo": {"lastPrice": 123.45}}]}
-    assert calls == ["ABC"]
+    assert calls == [("ABC", "EQ")]
+
+
+def test_get_market_data_retries_next_series_when_response_is_empty():
+    # Arrange
+    calls = []
+
+    def get_detailed_scrip_data(symbol, series="EQ"):
+        calls.append((symbol, series))
+        if series == "EQ":
+            return {
+                "equityResponse": [
+                    {
+                        "orderBook": None,
+                        "metaData": None,
+                        "tradeInfo": None,
+                        "priceInfo": None,
+                        "secInfo": None,
+                        "lastUpdateTime": None,
+                    }
+                ]
+            }
+        if series == "BE":
+            return {
+                "equityResponse": [
+                    {
+                        "metaData": {"symbol": symbol, "series": series},
+                        "tradeInfo": {"lastPrice": 2285.1},
+                        "priceInfo": {"yearHigh": 3894.7},
+                        "secInfo": {"basicIndustry": "IT Enabled Services"},
+                    }
+                ]
+            }
+        raise AssertionError(f"Unexpected series call: {series}")
+
+    fetcher = NSEFetcher.__new__(NSEFetcher)
+    fetcher._market_data_cache = {}
+    fetcher.nse = SimpleNamespace(getDetailedScripData=get_detailed_scrip_data)
+
+    # Act
+    result = fetcher.get_market_data("E2E")
+
+    # Assert
+    assert result == {
+        "equityResponse": [
+            {
+                "metaData": {"symbol": "E2E", "series": "BE"},
+                "tradeInfo": {"lastPrice": 2285.1},
+                "priceInfo": {"yearHigh": 3894.7},
+                "secInfo": {"basicIndustry": "IT Enabled Services"},
+            }
+        ]
+    }
+    assert calls == [("E2E", "EQ"), ("E2E", "BE")]

@@ -18,7 +18,7 @@ For fetch workflows, the CLI:
 2. Downloads the linked XBRL document when one is present.
 3. Attempts to parse the XBRL into a flat dictionary using `nse-xbrl-parser`.
 4. Fetches four-level industry mapping (Macro, Sector, Industry, Basic Industry) from `eggmasonvalue/stock-industry-map-in`.
-5. Fetches a compact market-data snapshot for stock symbols, currently limited to insider `acqMode` values `Market Purchase` and `Market Sale` for insider trading.
+5. Fetches a compact market-data snapshot for stock symbols, currently limited to insider `acqMode` values `Market Purchase` and `Market Sale` for insider trading. Detailed scrip-data fetches retry across valid NSE series values (`EQ`, `BE`, `BZ`, `SM`, `ST`, `SZ`) when the initial response is structurally empty.
 6. Writes normalized JSON output files for downstream processing.
 
 For insider trading, the CLI also provides a pure local shortening step that reads the full insider artifact and emits a compact signal-focused JSON with only the most important fields for top-down analysis.
@@ -194,6 +194,7 @@ Output shape:
 - `data[].industry`: classification values aligned to `metadata.industry`
 - `data[].marketData`: row values aligned to `metadata.marketData`
 - `currentPrice`: uses `closePrice`, then `lastPrice`, then `previousClose`, while treating zero-valued fields as missing
+- `marketData` fetches first try NSE series `EQ`; when NSE returns an empty `equityResponse` shell, the fetcher retries the remaining valid series in order until a usable payload is found
 - `sharesOutstanding`: total shares outstanding from `issuedSize`
 - `freeFloatMarketCap`: free-float market capitalization
 - `priceToEarnings`: symbol PE ratio from NSE detailed scrip data
