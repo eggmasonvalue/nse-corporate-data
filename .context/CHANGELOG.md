@@ -1,5 +1,7 @@
 # Changelog
 ## [Unreleased]
+- Expanded insider-trading `--mode` coverage to the broader NSE acquisition-mode enum, adding support for `Allotment`, `Beneficiary from Trusts`, `Block Deal`, `Buy Back`, `ESOS`, `Inheritance`, `Pledge Release`, and correctly spelled `Revocation of Pledge`.
+- Documented follow-up insider-trading input risks in `.context/DESIGN.md`: `transaction type` may need a dedicated user-facing filter, and `type of instrument` may need to be exposed as a filter dimension.
 - Removed redundant top-level `symbol` keys from full and shortened artifact rows; `symbol` now appears only in the metadata-aligned `api` or `record` arrays, while the shortener still accepts legacy full artifacts that carried `data[].symbol`.
 - Documented the current root sample-data invariant that `qip_data.json` contains only `QIP` `issueType` values and `pref_data.json` contains only `Preferential`, with both files using the metadata-driven columnar `api` layout.
 - Replaced raw NSE `metadata.api` labels in full PREF, QIP, and insider artifacts with canonical consumer-facing names.

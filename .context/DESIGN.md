@@ -10,6 +10,7 @@
 - Implemented: Per-symbol market-data caching to avoid repeated NSE requests inside a run
 - Implemented: Ordered fallback across valid NSE series values when `getDetailedScripData` returns an empty shell response for the default series
 - Implemented: Insider-trading market-data fetch limited to `Market Purchase` and `Market Sale` rows
+- Implemented: Insider-trading `--mode` coverage expanded to the broader NSE acquisition-mode enum, including allotment, trust-beneficiary, block-deal, buy-back, ESOS, inheritance, pledge-release, and revocation-of-pledge flows
 - Implemented: `currentPrice` priority of `closePrice`, then `lastPrice`, then `previousClose`
 - Implemented: Tenacity-based retry mechanism for resilient API requests
 - Implemented: CLI execution with structured JSON output; internal stdout/stderr redirected to log file
@@ -31,3 +32,7 @@
 - use "revisedFlag" to deduplicate filings while developing on top of this
 - For insider trading, for market purchases and sales, warrants will not be a problem. however, for categories like "Preferential Offer" or "Conversion of security", it might be. The shortening math will not hold.
 Warrants are not an issue for pref and qip since we're looking only at "Listing stage"
+- For insider trading,
+  - we may have to refactor the user-facing input to accept `transaction type` separately because it is a broader enum: `Buy`, `Sell`, `Pledge`, `Pledge Invoke`, `Pledge Revoke`.
+  - `type of instrument` may need to become a filter dimension as well. Current NSE values observed for this enum are: `Equity`, `Warrant`, `Debenture`, `Convertible Debenture`, `Bond`, `Derivative`, `Government Security`, `Preference Shares`, `Convertible Preference Shares`, `Any other instrument`.
+  - In acqMode, for "pledge-revoke", "Revocation of Pledge" is what's described the NSE taxonomy however some filers somehow mess the enum dropdown(inexplicably) leading to "Revokation of Pledge" being found as well

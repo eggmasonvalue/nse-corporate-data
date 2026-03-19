@@ -5,10 +5,16 @@ from nse_corporate_data.shorten import ShortField, build_short_output
 
 INSIDER_MODE_TO_ACQ_MODE = {
     "unknown": ("-",),
+    "allotment": ("Allotment",),
+    "beneficiary-from-trusts": ("Beneficiary from Trusts",),
+    "block-deal": ("Block Deal",),
     "bonus": ("Bonus",),
+    "buy-back": ("Buy Back",),
     "conversion": ("Conversion of security",),
     "esop": ("ESOP",),
+    "esos": ("ESOS",),
     "gift": ("Gift",),
+    "inheritance": ("Inheritance",),
     "inter-se-transfer": ("Inter-se-Transfer",),
     "pledge-invoke": ("Invocation of pledge",),
     "market": ("Market Purchase", "Market Sale"),
@@ -19,7 +25,8 @@ INSIDER_MODE_TO_ACQ_MODE = {
     "pledge-create": ("Pledge Creation",),
     "preferential-offer": ("Preferential Offer",),
     "public-right": ("Public Right",),
-    "pledge-revoke": ("Revokation of Pledge",),
+    "pledge-release": ("Pledge Release",),
+    "pledge-revoke": ("Revocation of Pledge",),
     "scheme": ("Scheme of Amalgamation/Merger/Demerger/Arrangement",),
 }
 
