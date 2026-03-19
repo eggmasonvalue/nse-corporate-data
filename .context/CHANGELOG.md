@@ -1,6 +1,10 @@
 # Changelog
 ## [Unreleased]
-- Refactored the CLI into grouped workflows: `further-issues fetch`, `insider-trading fetch`, and `insider-trading shorten`.
+- Added `further-issues shorten`, a pure local preferential-issue shortener that reads `pref_data.json` and writes `pref_short.json`.
+- Added a declarative preferential short-output field registry in `further_issues.py`.
+- Added a shared metadata-driven short-output helper in `shorten.py`.
+- Preserved `revisedFlag` in the preferential short artifact so consumers can detect revised or duplicate filing lineage.
+- Refactored the CLI into grouped workflows: `further-issues fetch|shorten` and `insider-trading fetch|shorten`.
 - Added a pure local insider-trading shortening workflow that emits `insider_trading_short.json`.
 - Added a declarative insider short-output field registry in `insider.py` so metadata can be changed in one place.
 - Changed CMP extraction to use NSE quote priority `close`, then `lastPrice`, then `previousClose`, while treating zero-valued quote fields as missing so fallbacks can apply.

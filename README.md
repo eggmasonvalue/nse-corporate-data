@@ -8,6 +8,7 @@ The project currently supports:
 
 - Further issue filings for preferential allotments (`PREF`)
 - Further issue filings for qualified institutional placements (`QIP`)
+- Preferential-issue short-form signal output derived from the full JSON (`further-issues shorten`)
 - Insider trading disclosures (`insider-trading fetch`)
 - Insider trading short-form signal output derived from the full JSON (`insider-trading shorten`)
 
@@ -21,6 +22,8 @@ For fetch workflows, the CLI:
 6. Writes normalized JSON output files for downstream processing.
 
 For insider trading, the CLI also provides a pure local shortening step that reads the full insider artifact and emits a compact signal-focused JSON with only the most important fields for top-down analysis.
+
+For further issues, the CLI currently provides a pure local shortening step for preferential allotments. It reads the full `pref_data.json` artifact and emits a compact JSON focused on amount raised, pricing, lock-in terms, revision lineage, and four-level industry context.
 
 For insider trading specifically, XBRL processing is configurable and disabled by default because the API payload is already rich enough for the current use case.
 
@@ -57,6 +60,23 @@ Defaults:
 
 - `--to-date`: current local date when the command runs
 - `--category`: both `pref` and `qip`
+
+### Preferential issue shorten
+
+```bash
+uv run nse-corporate-data further-issues shorten [--input pref_data.json] [--output pref_short.json]
+```
+
+Example:
+
+```bash
+uv run nse-corporate-data further-issues shorten
+```
+
+Defaults:
+
+- `--input`: `pref_data.json`
+- `--output`: `pref_short.json`
 
 ### Insider trading fetch
 
@@ -130,6 +150,7 @@ Execution details are written to:
 Data files:
 
 - `pref_data.json`
+- `pref_short.json`
 - `qip_data.json`
 - `insider_trading_data.json`
 - `insider_trading_short.json`
@@ -192,6 +213,34 @@ Short insider-trading output shape:
 
 The insider short artifact is driven by a declarative field list in `src/nse_corporate_data/insider.py`, so adding or removing metadata only requires editing that one registry.
 
+Short preferential-issue output shape:
+
+```json
+{
+  "metadata": [
+    "symbol",
+    "company",
+    "allotmentDate",
+    "amountRaised",
+    "sharesAllotted",
+    "offerPrice",
+    "CMP",
+    "lockInShares",
+    "lockInPeriod",
+    "revisedFlag",
+    "Macro",
+    "Sector",
+    "Industry",
+    "Basic Industry"
+  ],
+  "data": [
+    ["SYMBOL", "Company", "18-MAR-2026", "1000", "10", "95", 110, "4", "Equity shares for 6 months", null, "...", "...", "...", "..."]
+  ]
+}
+```
+
+`revisedFlag` is intentionally preserved. When it is non-null, the filing may have a revised or duplicate lineage that downstream consumers may need to collapse explicitly.
+
 ## Insider trading XBRL note
 
 The insider trading workflow can download and parse linked XML through `nse-xbrl-parser`, but this is disabled by default. If enabled, current NSE insider-trading taxonomy resolution may still fail upstream; when that happens, the command continues and writes API, industry, and CMP data with empty XBRL fields.
@@ -199,9 +248,11 @@ The insider trading workflow can download and parse linked XML through `nse-xbrl
 ## Project Structure
 
 - `src/nse_corporate_data/cli.py`: Click CLI entrypoint and input validation
+- `src/nse_corporate_data/further_issues.py`: preferential-issue short-output schema
 - `src/nse_corporate_data/fetcher.py`: NSE session management, filing fetches, XBRL downloads
 - `src/nse_corporate_data/insider.py`: insider-mode mapping and shortened insider-output schema
 - `src/nse_corporate_data/parser.py`: XBRL parsing and JSON serialization
+- `src/nse_corporate_data/shorten.py`: shared helpers for metadata-driven local JSON shortening
 
 ## Testing
 

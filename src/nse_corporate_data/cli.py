@@ -7,6 +7,11 @@ from datetime import datetime
 from typing import Any, Callable, Optional
 
 from nse_corporate_data.fetcher import NSEFetcher
+from nse_corporate_data.further_issues import (
+    DEFAULT_PREF_FULL_OUTPUT,
+    DEFAULT_PREF_SHORT_OUTPUT,
+    build_pref_short_output,
+)
 from nse_corporate_data.insider import (
     DEFAULT_INSIDER_FULL_OUTPUT,
     DEFAULT_INSIDER_MODES,
@@ -169,6 +174,41 @@ def fetch_further_issues(from_date, to_date, categories):
         return {"files": output_files}
 
     execute_silently(work)
+
+
+@further_issues.command("shorten")
+@click.option(
+    "--input",
+    "input_path",
+    default=DEFAULT_PREF_FULL_OUTPUT,
+    show_default=True,
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Path to the full preferential-issue JSON artifact.",
+)
+@click.option(
+    "--output",
+    "output_path",
+    default=DEFAULT_PREF_SHORT_OUTPUT,
+    show_default=True,
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Path for the shortened preferential-issue JSON artifact.",
+)
+def shorten_further_issues(input_path: Path, output_path: Path):
+    """Read a full preferential-issue artifact and emit a shortened JSON."""
+
+    def work(fetcher: Optional[NSEFetcher]) -> dict[str, Any]:
+        del fetcher
+        logger.info(f"Shortening preferential-issue data from {input_path} to {output_path}")
+        with input_path.open("r", encoding="utf-8") as handle:
+            full_output = json.load(handle)
+        shortened_output = build_pref_short_output(full_output)
+        save_to_json(shortened_output, str(output_path))
+        logger.info(
+            f"Successfully saved shortened preferential issue data to {output_path}"
+        )
+        return {"files": [str(output_path)]}
+
+    execute_silently(work, with_fetcher=False)
 
 
 @cli.group("insider-trading")

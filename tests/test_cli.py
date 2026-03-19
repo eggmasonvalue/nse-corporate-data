@@ -148,6 +148,101 @@ def test_further_issues_fetch_rejects_inverted_date_range(monkeypatch, tmp_path)
     assert saved == []
 
 
+def test_further_issues_shorten_writes_expected_metadata(monkeypatch, tmp_path):
+    runner = CliRunner()
+
+    def fail_fetcher():
+        raise AssertionError("shorten should not instantiate NSEFetcher")
+
+    monkeypatch.setattr(cli_module, "NSEFetcher", fail_fetcher)
+
+    full_output = {
+        "metadata": {
+            "api": [
+                "amountRaised",
+                "dateOfAllotmentOfShares",
+                "nameOfTheCompany",
+                "offerPricePerSecurity",
+                "revisedFlag",
+                "totalNumOfSharesAllotted",
+            ],
+            "xbrl": [
+                "Number of lock in shares",
+                "Period of lock in shares",
+            ],
+            "industry": ["Macro", "Sector", "Industry", "Basic Industry"],
+            "CMP": ["CMP"],
+        },
+        "data": [
+            {
+                "symbol": "ABC",
+                "api": [
+                    "1000",
+                    "18-MAR-2026",
+                    "ABC Limited",
+                    "95",
+                    "REV-1",
+                    "10",
+                ],
+                "xbrl": ["4", "Equity shares for 6 months"],
+                "industry": [
+                    "Industrials",
+                    "Capital Goods",
+                    "Electrical Equipment",
+                    "Other Electrical Equipment",
+                ],
+                "CMP": 110,
+            }
+        ],
+    }
+
+    with runner.isolated_filesystem(temp_dir=tmp_path):
+        input_path = Path("pref_data.json")
+        input_path.write_text(json.dumps(full_output), encoding="utf-8")
+        result = runner.invoke(
+            cli_module.cli,
+            ["further-issues", "shorten"],
+        )
+        shortened = json.loads(Path("pref_short.json").read_text(encoding="utf-8"))
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {"files": ["pref_short.json"]}
+    assert shortened["metadata"] == [
+        "symbol",
+        "company",
+        "allotmentDate",
+        "amountRaised",
+        "sharesAllotted",
+        "offerPrice",
+        "CMP",
+        "lockInShares",
+        "lockInPeriod",
+        "revisedFlag",
+        "Macro",
+        "Sector",
+        "Industry",
+        "Basic Industry",
+    ]
+    assert shortened["data"] == [
+        [
+            "ABC",
+            "ABC Limited",
+            "18-MAR-2026",
+            "1000",
+            "10",
+            "95",
+            110,
+            "4",
+            "Equity shares for 6 months",
+            "REV-1",
+            "Industrials",
+            "Capital Goods",
+            "Electrical Equipment",
+            "Other Electrical Equipment",
+        ]
+    ]
+
+
 def test_insider_trading_fetch_uses_default_to_date(monkeypatch, tmp_path):
     runner = CliRunner()
     saved = []
