@@ -51,7 +51,19 @@ class DummyFetcher:
 
 
 EMPTY_PARSED = {
-    "metadata": {"api": [], "xbrl": [], "industry": [], "CMP": ["CMP"]},
+    "metadata": {
+        "api": [],
+        "xbrl": [],
+        "industry": [],
+        "marketData": [
+            "currentPrice",
+            "sharesOutstanding",
+            "freeFloatMarketCap",
+            "priceToEarnings",
+            "fiftyTwoWeekHigh",
+            "fiftyTwoWeekLow",
+        ],
+    },
     "data": [],
 }
 
@@ -171,7 +183,14 @@ def test_further_issues_shorten_writes_expected_metadata(monkeypatch, tmp_path):
                 "Period of lock in shares",
             ],
             "industry": ["Macro", "Sector", "Industry", "Basic Industry"],
-            "CMP": ["CMP"],
+            "marketData": [
+                "currentPrice",
+                "sharesOutstanding",
+                "freeFloatMarketCap",
+                "priceToEarnings",
+                "fiftyTwoWeekHigh",
+                "fiftyTwoWeekLow",
+            ],
         },
         "data": [
             {
@@ -191,7 +210,7 @@ def test_further_issues_shorten_writes_expected_metadata(monkeypatch, tmp_path):
                     "Electrical Equipment",
                     "Other Electrical Equipment",
                 ],
-                "CMP": 110,
+                "marketData": [110, 1000, 25000, "18.5", 150, 80],
             }
         ],
     }
@@ -214,7 +233,7 @@ def test_further_issues_shorten_writes_expected_metadata(monkeypatch, tmp_path):
         "amountRaised",
         "sharesAllotted",
         "offerPrice",
-        "CMP",
+        "currentPrice",
         "lockInShares",
         "lockInPeriod",
         "revisedFlag",
@@ -393,7 +412,14 @@ def test_insider_trading_shorten_writes_expected_metadata(monkeypatch, tmp_path)
             ],
             "xbrl": [],
             "industry": ["Macro", "Sector", "Industry", "Basic Industry"],
-            "CMP": ["CMP"],
+            "marketData": [
+                "currentPrice",
+                "sharesOutstanding",
+                "freeFloatMarketCap",
+                "priceToEarnings",
+                "fiftyTwoWeekHigh",
+                "fiftyTwoWeekLow",
+            ],
         },
         "data": [
             {
@@ -410,7 +436,7 @@ def test_insider_trading_shorten_writes_expected_metadata(monkeypatch, tmp_path)
                 ],
                 "xbrl": [],
                 "industry": ["Industrials", "Capital Goods", "Electrical Equipment", "Other Electrical Equipment"],
-                "CMP": 95,
+                "marketData": [95, 1000, 25000, "18.5", 150, 80],
             }
         ],
     }
@@ -433,7 +459,7 @@ def test_insider_trading_shorten_writes_expected_metadata(monkeypatch, tmp_path)
         "tradeDate",
         "transactionValue",
         "pricePerShare",
-        "CMP",
+        "currentPrice",
         "holdingDeltaPct",
         "Macro",
         "Sector",

@@ -1,5 +1,9 @@
 # Changelog
 ## [Unreleased]
+- Replaced the canonical `CMP` field with a richer `marketData` block containing `currentPrice`, `sharesOutstanding`, `freeFloatMarketCap`, `priceToEarnings`, `fiftyTwoWeekHigh`, and `fiftyTwoWeekLow`.
+- Switched canonical market enrichment from `nse.quote()` to `nse.getDetailedScripData()`.
+- Renamed shortened-artifact price context from `CMP` to `currentPrice`.
+- Refreshed `samples/pref_data.json`, `samples/qip_data.json`, `samples/insider_trading_data.json`, `samples/pref_short.json`, and `samples/insider_trading_short.json` from March 2026 / 18-Mar-2026 fetch windows.
 - Added `further-issues shorten`, a pure local preferential-issue shortener that reads `pref_data.json` and writes `pref_short.json`.
 - Added a declarative preferential short-output field registry in `further_issues.py`.
 - Added a shared metadata-driven short-output helper in `shorten.py`.
@@ -7,18 +11,18 @@
 - Refactored the CLI into grouped workflows: `further-issues fetch|shorten` and `insider-trading fetch|shorten`.
 - Added a pure local insider-trading shortening workflow that emits `insider_trading_short.json`.
 - Added a declarative insider short-output field registry in `insider.py` so metadata can be changed in one place.
-- Changed CMP extraction to use NSE quote priority `close`, then `lastPrice`, then `previousClose`, while treating zero-valued quote fields as missing so fallbacks can apply.
-- Limited insider-trading CMP lookups to `Market Purchase` and `Market Sale` rows to avoid unnecessary quote calls.
+- Changed `currentPrice` extraction to use NSE priority `closePrice`, then `lastPrice`, then `previousClose`, while treating zero-valued fields as missing so fallbacks can apply.
+- Limited insider-trading market-data lookups to `Market Purchase` and `Market Sale` rows to avoid unnecessary NSE calls.
 - Added `Settings`-based configuration for insider trading, including `NSE_CORPORATE_DATA_ENABLE_INSIDER_TRADING_XBRL`.
 - Disabled insider-trading XBRL processing by default while keeping it configurable.
-- Added a fetcher-level per-symbol quote cache to avoid repeated NSE quote requests within a run.
+- Added a fetcher-level per-symbol market-data cache to avoid repeated NSE requests within a run.
 - Replaced raw CLI values with canonical machine-facing tokens: repeatable `--category pref|qip` for further issues and repeatable `--mode` tokens for insider trading.
 - Renamed insider mode tokens `buy` and `sell` to `market-buy` and `market-sell` to avoid ambiguity with broader NSE buy/sell semantics.
 - Renamed the project/package surface to `nse-corporate-data` / `nse_corporate_data`.
 - Replaced the old single `fetch` command with nested workflow groups.
 - Added a default `--to-date` of the local run date for both CLI workflows.
 - Defaulted further-issues to both `pref` and `qip` when `--category` is omitted.
-- Added insider trading ingestion using the NSE `corporates-pit` endpoint, XBRL download, industry enrichment, and CMP enrichment.
+- Added insider trading ingestion using the NSE `corporates-pit` endpoint, XBRL download, industry enrichment, and market-data enrichment.
 - Added tests covering CLI defaults, date-range validation, and generic parser behavior.
 - Documented the temporary insider-trading XBRL parsing limitation caused by upstream NSE taxonomy issues.
 

@@ -2,9 +2,10 @@ import json
 import logging
 from typing import Any, Dict, Iterable, List, Optional
 from nse_xbrl_parser import parse_xbrl_file
+from nse_corporate_data.fetcher import MARKET_DATA_METADATA
 
 logger = logging.getLogger(__name__)
-_CMP_RELEVANT_ACQ_MODES = {"Market Purchase", "Market Sale"}
+_MARKET_DATA_RELEVANT_ACQ_MODES = {"Market Purchase", "Market Sale"}
 
 
 def _empty_results() -> Dict[str, Any]:
@@ -13,7 +14,7 @@ def _empty_results() -> Dict[str, Any]:
             "api": [],
             "xbrl": [],
             "industry": [],
-            "CMP": ["CMP"],
+            "marketData": MARKET_DATA_METADATA,
         },
         "data": [],
     }
@@ -27,13 +28,38 @@ def _resolve_first(item: Dict[str, Any], keys: Iterable[str]) -> Optional[Any]:
     return None
 
 
-def _extract_cmp(quote_data: Dict[str, Any]) -> Optional[Any]:
-    price_info = quote_data.get("priceInfo", {})
-    for key in ("close", "lastPrice", "previousClose"):
-        value = price_info.get(key)
+def _first_nonzero(*values: Any) -> Optional[Any]:
+    for value in values:
         if value not in (None, 0, 0.0, "0", "0.0"):
             return value
     return None
+
+
+def _extract_market_data(detailed_data: Dict[str, Any]) -> List[Optional[Any]]:
+    response = detailed_data.get("equityResponse", [])
+    if not response:
+        return [None] * len(MARKET_DATA_METADATA)
+
+    item = response[0]
+    meta_data = item.get("metaData") or {}
+    trade_info = item.get("tradeInfo") or {}
+    price_info = item.get("priceInfo") or {}
+    sec_info = item.get("secInfo") or {}
+
+    current_price = _first_nonzero(
+        meta_data.get("closePrice"),
+        trade_info.get("lastPrice"),
+        meta_data.get("previousClose"),
+    )
+
+    return [
+        current_price,
+        trade_info.get("issuedSize"),
+        trade_info.get("ffmc"),
+        sec_info.get("pdSymbolPe"),
+        price_info.get("yearHigh"),
+        price_info.get("yearLow"),
+    ]
 
 
 def parse_filings_data(
@@ -103,7 +129,7 @@ def parse_filings_data(
             "api": sorted_api_keys,
             "xbrl": sorted_xbrl_keys,
             "industry": industry_metadata,
-            "CMP": ["CMP"],
+            "marketData": MARKET_DATA_METADATA,
         },
         "data": [],
     }
@@ -113,13 +139,16 @@ def parse_filings_data(
         source_item = rec["source_item"]
         xbrl_values = [rec["xbrl_dict"].get(k) for k in sorted_xbrl_keys]
 
-        # Fetch CMP
-        cmp = None
+        market_data_values = [None] * len(MARKET_DATA_METADATA)
         acq_mode = source_item.get("acqMode")
-        if symbol != "UNKNOWN" and acq_mode in _CMP_RELEVANT_ACQ_MODES:
-            quote_data = fetcher.get_quote(symbol)
-            if quote_data:
-                cmp = _extract_cmp(quote_data)
+        if symbol != "UNKNOWN" and acq_mode in _MARKET_DATA_RELEVANT_ACQ_MODES:
+            detailed_data = fetcher.get_market_data(symbol)
+            if detailed_data:
+                market_data_values = _extract_market_data(detailed_data)
+        elif symbol != "UNKNOWN" and "acqMode" not in source_item:
+            detailed_data = fetcher.get_market_data(symbol)
+            if detailed_data:
+                market_data_values = _extract_market_data(detailed_data)
 
         # Get industry data for this symbol
         industry_values = industry_map.get(symbol, [])
@@ -130,7 +159,7 @@ def parse_filings_data(
                 "api": rec["base_row"],
                 "xbrl": xbrl_values,
                 "industry": industry_values,
-                "CMP": cmp,
+                "marketData": market_data_values,
             }
         )
 

@@ -41,20 +41,21 @@ def test_fetcher_uses_provided_download_folder(tmp_path):
     assert os.path.exists(custom_dir)
 
 
-def test_get_quote_uses_fetcher_cache():
+def test_get_market_data_uses_fetcher_cache():
     # Arrange
     calls = []
     fetcher = NSEFetcher.__new__(NSEFetcher)
-    fetcher._quote_cache = {}
+    fetcher._market_data_cache = {}
     fetcher.nse = SimpleNamespace(
-        quote=lambda symbol: calls.append(symbol) or {"priceInfo": {"close": 123.45}}
+        getDetailedScripData=lambda symbol: calls.append(symbol)
+        or {"equityResponse": [{"tradeInfo": {"lastPrice": 123.45}}]}
     )
 
     # Act
-    first = fetcher.get_quote("ABC")
-    second = fetcher.get_quote("ABC")
+    first = fetcher.get_market_data("ABC")
+    second = fetcher.get_market_data("ABC")
 
     # Assert
-    assert first == {"priceInfo": {"close": 123.45}}
-    assert second == {"priceInfo": {"close": 123.45}}
+    assert first == {"equityResponse": [{"tradeInfo": {"lastPrice": 123.45}}]}
+    assert second == {"equityResponse": [{"tradeInfo": {"lastPrice": 123.45}}]}
     assert calls == ["ABC"]

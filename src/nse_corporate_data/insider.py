@@ -79,7 +79,7 @@ INSIDER_SHORT_FIELDS: Sequence[ShortField] = (
         lambda context: _coerce_number(_to_decimal(context.get("secVal"))),
     ),
     ShortField("pricePerShare", _price_per_share),
-    ShortField("CMP", lambda context: context.get("CMP")),
+    ShortField("currentPrice", lambda context: context.get("currentPrice")),
     ShortField("holdingDeltaPct", _holding_delta_pct),
     ShortField("Macro", lambda context: context.get("Macro")),
     ShortField("Sector", lambda context: context.get("Sector")),

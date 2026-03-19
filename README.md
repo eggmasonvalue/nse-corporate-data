@@ -18,7 +18,7 @@ For fetch workflows, the CLI:
 2. Downloads the linked XBRL document when one is present.
 3. Attempts to parse the XBRL into a flat dictionary using `nse-xbrl-parser`.
 4. Fetches four-level industry mapping (Macro, Sector, Industry, Basic Industry) from `eggmasonvalue/stock-industry-map-in`.
-5. Fetches Current Market Price (CMP) for stock symbols only when it materially matters, currently insider `acqMode` values `Market Purchase` and `Market Sale`.
+5. Fetches a compact market-data snapshot for stock symbols, currently limited to insider `acqMode` values `Market Purchase` and `Market Sale` for insider trading.
 6. Writes normalized JSON output files for downstream processing.
 
 For insider trading, the CLI also provides a pure local shortening step that reads the full insider artifact and emits a compact signal-focused JSON with only the most important fields for top-down analysis.
@@ -163,7 +163,14 @@ Output shape:
     "api": ["..."],
     "xbrl": ["..."],
     "industry": ["Macro", "Sector", "Industry", "Basic Industry"],
-    "CMP": ["CMP"]
+    "marketData": [
+      "currentPrice",
+      "sharesOutstanding",
+      "freeFloatMarketCap",
+      "priceToEarnings",
+      "fiftyTwoWeekHigh",
+      "fiftyTwoWeekLow"
+    ]
   },
   "data": [
     {
@@ -171,7 +178,7 @@ Output shape:
       "api": ["..."],
       "xbrl": ["..."],
       "industry": ["...", "...", "...", "..."],
-      "CMP": 123.45
+      "marketData": [123.45, 1000000, 123456789.0, "18.5", 150.0, 80.0]
     }
   ]
 }
@@ -180,12 +187,17 @@ Output shape:
 - `metadata.api`: sorted keys observed in the NSE API payload
 - `metadata.xbrl`: sorted keys observed across parsed XBRL documents
 - `metadata.industry`: labels for the four-level industry classification
-- `metadata.CMP`: label for the CMP column
+- `metadata.marketData`: labels for the compact market-data block
 - `data[].symbol`: resolved NSE symbol for the row
 - `data[].api`: row values aligned to `metadata.api`
 - `data[].xbrl`: row values aligned to `metadata.xbrl`
 - `data[].industry`: classification values aligned to `metadata.industry`
-- `data[].CMP`: current market price for the symbol, using quote-field priority `close`, then `lastPrice`, then `previousClose`, while treating zero-valued quote fields as missing
+- `data[].marketData`: row values aligned to `metadata.marketData`
+- `currentPrice`: uses `closePrice`, then `lastPrice`, then `previousClose`, while treating zero-valued fields as missing
+- `sharesOutstanding`: total shares outstanding from `issuedSize`
+- `freeFloatMarketCap`: free-float market capitalization
+- `priceToEarnings`: symbol PE ratio from NSE detailed scrip data
+- `fiftyTwoWeekHigh` / `fiftyTwoWeekLow`: 52-week range context
 
 Short insider-trading output shape:
 
@@ -198,7 +210,7 @@ Short insider-trading output shape:
     "tradeDate",
     "transactionValue",
     "pricePerShare",
-    "CMP",
+    "currentPrice",
     "holdingDeltaPct",
     "Macro",
     "Sector",
@@ -224,7 +236,7 @@ Short preferential-issue output shape:
     "amountRaised",
     "sharesAllotted",
     "offerPrice",
-    "CMP",
+    "currentPrice",
     "lockInShares",
     "lockInPeriod",
     "revisedFlag",
@@ -243,7 +255,7 @@ Short preferential-issue output shape:
 
 ## Insider trading XBRL note
 
-The insider trading workflow can download and parse linked XML through `nse-xbrl-parser`, but this is disabled by default. If enabled, current NSE insider-trading taxonomy resolution may still fail upstream; when that happens, the command continues and writes API, industry, and CMP data with empty XBRL fields.
+The insider trading workflow can download and parse linked XML through `nse-xbrl-parser`, but this is disabled by default. If enabled, current NSE insider-trading taxonomy resolution may still fail upstream; when that happens, the command continues and writes API, industry, and market-data fields with empty XBRL fields.
 
 ## Project Structure
 

@@ -16,6 +16,7 @@ def build_short_output(
     api_fields = metadata.get("api", [])
     xbrl_fields = metadata.get("xbrl", [])
     industry_fields = metadata.get("industry", [])
+    market_data_fields = metadata.get("marketData", [])
 
     results: Dict[str, Any] = {
         "metadata": [field.name for field in fields],
@@ -25,11 +26,11 @@ def build_short_output(
     for row in full_output.get("data", []):
         context = {
             "symbol": row.get("symbol"),
-            "CMP": row.get("CMP"),
         }
         context.update(dict(zip(api_fields, row.get("api", []))))
         context.update(dict(zip(xbrl_fields, row.get("xbrl", []))))
         context.update(dict(zip(industry_fields, row.get("industry", []))))
+        context.update(dict(zip(market_data_fields, row.get("marketData", []))))
         results["data"].append([field.extractor(context) for field in fields])
 
     return results

@@ -26,7 +26,7 @@ PREF_SHORT_FIELDS: Sequence[ShortField] = (
         lambda context: context.get("offerPricePerSecurity")
         or context.get("Offer price per security"),
     ),
-    ShortField("CMP", lambda context: context.get("CMP")),
+    ShortField("currentPrice", lambda context: context.get("currentPrice")),
     ShortField(
         "lockInShares",
         lambda context: context.get("Number of lock in shares"),

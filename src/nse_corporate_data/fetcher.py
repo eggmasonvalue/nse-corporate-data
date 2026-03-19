@@ -8,6 +8,14 @@ from nse import NSE
 from .retries import retry_exchange, should_retry_exception
 
 logger = logging.getLogger(__name__)
+MARKET_DATA_METADATA = [
+    "currentPrice",
+    "sharesOutstanding",
+    "freeFloatMarketCap",
+    "priceToEarnings",
+    "fiftyTwoWeekHigh",
+    "fiftyTwoWeekLow",
+]
 
 
 class NSEFetcher:
@@ -29,7 +37,7 @@ class NSEFetcher:
         # Initialize cookies
         self._init_session()
         self._industry_data_cache: Optional[Dict[str, Any]] = None
-        self._quote_cache: Dict[str, Optional[Dict[str, Any]]] = {}
+        self._market_data_cache: Dict[str, Optional[Dict[str, Any]]] = {}
 
     def _init_session(self):
         try:
@@ -126,23 +134,21 @@ class NSEFetcher:
             return None
 
     @retry_exchange
-    def get_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
-        """
-        Fetch the current quote for a given equity symbol.
-        """
+    def get_market_data(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Fetch detailed market data for a given equity symbol."""
         if not symbol:
             return None
-        if symbol in self._quote_cache:
-            return self._quote_cache[symbol]
+        if symbol in self._market_data_cache:
+            return self._market_data_cache[symbol]
         try:
-            quote = self.nse.quote(symbol)
-            self._quote_cache[symbol] = quote
-            return quote
+            market_data = self.nse.getDetailedScripData(symbol)
+            self._market_data_cache[symbol] = market_data
+            return market_data
         except Exception as e:
             if should_retry_exception(e):
                 raise e
-            logger.error(f"Failed to fetch quote for {symbol}: {e}")
-            self._quote_cache[symbol] = None
+            logger.error(f"Failed to fetch market data for {symbol}: {e}")
+            self._market_data_cache[symbol] = None
             return None
 
     def get_industry_data(self) -> Dict[str, Any]:

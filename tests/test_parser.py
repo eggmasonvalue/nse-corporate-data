@@ -7,7 +7,7 @@ class FakeFetcher:
     def __init__(self, xml_path: Path):
         self.xml_path = xml_path
         self.download_calls = []
-        self.quote_calls = []
+        self.market_data_calls = []
 
     def download_xbrl_file(self, xbrl_url: str):
         self.download_calls.append(xbrl_url)
@@ -19,9 +19,30 @@ class FakeFetcher:
             "data": {"ABC": ["M", "S", "I", "B"]},
         }
 
-    def get_quote(self, symbol: str):
-        self.quote_calls.append(symbol)
-        return {"priceInfo": {"close": 123.45, "lastPrice": 99.0}}
+    def get_market_data(self, symbol: str):
+        self.market_data_calls.append(symbol)
+        return {
+            "equityResponse": [
+                {
+                    "metaData": {
+                        "closePrice": 0,
+                        "previousClose": 120.0,
+                    },
+                    "tradeInfo": {
+                        "lastPrice": 123.45,
+                        "issuedSize": 1000,
+                        "ffmc": 25000.0,
+                    },
+                    "priceInfo": {
+                        "yearHigh": 150.0,
+                        "yearLow": 80.0,
+                    },
+                    "secInfo": {
+                        "pdSymbolPe": "18.5",
+                    },
+                }
+            ]
+        }
 
 
 def test_parse_filings_data_supports_custom_symbol_and_xbrl_keys(tmp_path, monkeypatch):
@@ -57,7 +78,7 @@ def test_parse_filings_data_supports_custom_symbol_and_xbrl_keys(tmp_path, monke
             "api": ["Market Purchase", "Example Corp", "ABC", "https://example.com/it.xml"],
             "xbrl": ["value-a", "value-b"],
             "industry": ["M", "S", "I", "B"],
-            "CMP": 123.45,
+            "marketData": [123.45, 1000, 25000.0, "18.5", 150.0, 80.0],
         }
     ]
 
@@ -117,13 +138,22 @@ def test_parse_filings_data_skips_xbrl_download_when_disabled(tmp_path, monkeypa
     assert result["metadata"]["xbrl"] == []
 
 
-def test_extract_cmp_uses_fallback_when_close_is_zero():
-    assert parser_module._extract_cmp(
-        {"priceInfo": {"close": 0, "lastPrice": 42.75, "previousClose": 42.75}}
-    ) == 42.75
+def test_extract_market_data_uses_price_fallback_when_close_is_zero():
+    assert parser_module._extract_market_data(
+        {
+            "equityResponse": [
+                {
+                    "metaData": {"closePrice": 0, "previousClose": 40.0},
+                    "tradeInfo": {"lastPrice": 42.75, "issuedSize": 10, "ffmc": 100.0},
+                    "priceInfo": {"yearHigh": 50.0, "yearLow": 30.0},
+                    "secInfo": {"pdSymbolPe": "12.3"},
+                }
+            ]
+        }
+    ) == [42.75, 10, 100.0, "12.3", 50.0, 30.0]
 
 
-def test_parse_filings_data_skips_quote_for_non_market_acq_modes(monkeypatch):
+def test_parse_filings_data_skips_market_data_for_non_market_acq_modes(monkeypatch):
     fetcher = FakeFetcher(Path("."))
 
     monkeypatch.setattr(parser_module, "parse_xbrl_file", lambda path: {})
@@ -142,5 +172,5 @@ def test_parse_filings_data_skips_quote_for_non_market_acq_modes(monkeypatch):
         enable_xbrl_processing=False,
     )
 
-    assert fetcher.quote_calls == []
-    assert result["data"][0]["CMP"] is None
+    assert fetcher.market_data_calls == []
+    assert result["data"][0]["marketData"] == [None, None, None, None, None, None]
