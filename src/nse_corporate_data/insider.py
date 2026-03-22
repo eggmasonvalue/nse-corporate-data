@@ -25,7 +25,7 @@ SELL_PRESET_MODES = [
 ]
 # Note: "Invocation of pledge" is omitted from sell preset due to inconsistent data quality
 
-INSIDER_PRESETS = ("market", "buy", "sell")
+INSIDER_PRESETS = ("market", "buy", "sell", "forced-sales")
 DEFAULT_INSIDER_FULL_OUTPUT = "insider_trading_data.json"
 DEFAULT_INSIDER_REFINED_OUTPUT = "insider_trading_refined.json"
 
@@ -135,6 +135,7 @@ def filter_insider_filings_by_preset(
     filtered_data = []
     metadata = data.get("metadata", {})
     api_fields = metadata.get("api", [])
+    seen_transactions = set()
 
     for row in data.get("data", []):
         context = dict(zip(api_fields, row.get("api", [])))
@@ -159,6 +160,19 @@ def filter_insider_filings_by_preset(
                 and acq_mode in SELL_PRESET_MODES
             ):
                 filtered_data.append(row)
+        elif preset == "forced-sales":
+            dir_lower = str(direction).lower()
+            mode_lower = str(acq_mode).lower()
+            if "pledge invoke" in dir_lower or "invocation" in mode_lower:
+                symbol = context.get("symbol")
+                person = context.get("personName")
+                qty = context.get("transactionQuantity")
+                date = context.get("transactionStartDate")
+                
+                key = (symbol, person, qty, date)
+                if key not in seen_transactions:
+                    filtered_data.append(row)
+                    seen_transactions.add(key)
 
     return {"metadata": metadata, "data": filtered_data}
 
