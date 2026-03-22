@@ -40,7 +40,7 @@ class NSEFetcher:
         self._industry_data_cache: Optional[Dict[str, Any]] = None
         self._market_data_cache: Dict[str, Optional[Dict[str, Any]]] = {}
 
-    def _init_session(self):
+    def _init_session(self) -> None:
         try:
             self.nse._session.get("https://www.nseindia.com", timeout=10)
         except Exception as e:

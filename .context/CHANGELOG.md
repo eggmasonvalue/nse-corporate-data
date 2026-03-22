@@ -1,5 +1,6 @@
 # Changelog
 ## [Unreleased]
+- Added `-> None` type hint to `NSEFetcher._init_session` to explicitly indicate it returns no value.
 - Improved the insider trading percentage change calculation to use precise raw shares differences, resolving previous precision loss caused by NSE's rounded percentages.
 - Expanded insider-trading `--mode` coverage to the broader NSE acquisition-mode enum, adding support for `Allotment`, `Beneficiary from Trusts`, `Block Deal`, `Buy Back`, `ESOS`, `Inheritance`, `Pledge Release`, and correctly spelled `Revocation of Pledge`.
 - Documented follow-up insider-trading input risks in `.context/DESIGN.md`: `transaction type` may need a dedicated user-facing filter, and `type of instrument` may need to be exposed as a filter dimension.
