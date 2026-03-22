@@ -25,9 +25,9 @@ SELL_PRESET_MODES = [
 ]
 # Note: "Invocation of pledge" is omitted from sell preset due to inconsistent data quality
 
-INSIDER_PRESETS = ("market", "buy", "sell", "forced-sales")
-DEFAULT_INSIDER_FULL_OUTPUT = "insider_trading_data.json"
-DEFAULT_INSIDER_REFINED_OUTPUT = "insider_trading_refined.json"
+INSIDER_PRESETS = ("market", "market-buy", "market-sell", "buy", "sell", "forced-sales")
+DEFAULT_INSIDER_FULL_OUTPUT = "insider_raw.json"
+DEFAULT_INSIDER_REFINED_OUTPUT = "insider.json"
 
 INSIDER_API_LABELS = {
     "acqMode": "transactionMode",
@@ -145,6 +145,12 @@ def filter_insider_filings_by_preset(
 
         if preset == "market":
             if acq_mode in ["Market Purchase", "Market Sale"]:
+                filtered_data.append(row)
+        elif preset == "market-buy":
+            if acq_mode == "Market Purchase":
+                filtered_data.append(row)
+        elif preset == "market-sell":
+            if acq_mode == "Market Sale":
                 filtered_data.append(row)
         elif preset == "buy":
             if (

@@ -90,8 +90,8 @@ def test_further_issues_fetch_defaults_to_both_and_today(monkeypatch, tmp_path):
         )
 
     assert result.exit_code == 0
-    assert json.loads(result.output) == {"files": ["pref_data.json", "qip_data.json"]}
-    assert saved == ["pref_data.json", "qip_data.json"]
+    assert json.loads(result.output) == {"files": ["pref_raw.json", "qip_raw.json"]}
+    assert saved == ["pref_raw.json", "qip_raw.json"]
 
     today = datetime.now().strftime("%d-%m-%Y")
     assert fetchers[0].calls == [
@@ -223,16 +223,16 @@ def test_further_issues_refine_writes_expected_metadata(monkeypatch, tmp_path):
     }
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        input_path = Path("pref_data.json")
+        input_path = Path("pref_raw.json")
         input_path.write_text(json.dumps(full_output), encoding="utf-8")
         result = runner.invoke(
             cli_module.cli,
             ["further-issues", "refine"],
         )
-        refined = json.loads(Path("pref_refined.json").read_text(encoding="utf-8"))
+        refined = json.loads(Path("pref.json").read_text(encoding="utf-8"))
 
     assert result.exit_code == 0
-    assert json.loads(result.output) == {"files": ["pref_refined.json"]}
+    assert json.loads(result.output) == {"files": ["pref.json"]}
     assert refined["metadata"] == {
         "record": [
             "symbol",
@@ -356,16 +356,16 @@ def test_qip_refine_writes_expected_metadata(monkeypatch, tmp_path):
     }
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        input_path = Path("qip_data.json")
+        input_path = Path("qip_raw.json")
         input_path.write_text(json.dumps(full_output), encoding="utf-8")
         result = runner.invoke(
             cli_module.cli,
             ["further-issues", "refine", "--category", "qip"],
         )
-        refined = json.loads(Path("qip_refined.json").read_text(encoding="utf-8"))
+        refined = json.loads(Path("qip.json").read_text(encoding="utf-8"))
 
     assert result.exit_code == 0
-    assert json.loads(result.output) == {"files": ["qip_refined.json"]}
+    assert json.loads(result.output) == {"files": ["qip.json"]}
     assert "xbrl" in refined["metadata"]
 
 
@@ -397,8 +397,8 @@ def test_insider_trading_fetch_uses_default_to_date(monkeypatch, tmp_path):
         )
 
     assert result.exit_code == 0
-    assert json.loads(result.output) == {"files": ["insider_trading_data.json"]}
-    assert saved == ["insider_trading_data.json"]
+    assert json.loads(result.output) == {"files": ["insider_raw.json"]}
+    assert saved == ["insider_raw.json"]
 
     today = datetime.now().strftime("%d-%m-%Y")
     assert fetchers[0].calls == [
@@ -469,18 +469,18 @@ def test_insider_trading_refine_writes_expected_metadata(monkeypatch, tmp_path):
     }
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        input_path = Path("insider_trading_data.json")
+        input_path = Path("insider_raw.json")
         input_path.write_text(json.dumps(full_output), encoding="utf-8")
         result = runner.invoke(
             cli_module.cli,
             ["insider-trading", "refine", "--preset", "market"],
         )
         refined = json.loads(
-            Path("insider_trading_refined.json").read_text(encoding="utf-8")
+            Path("insider.json").read_text(encoding="utf-8")
         )
 
     assert result.exit_code == 0
-    assert json.loads(result.output) == {"files": ["insider_trading_refined.json"]}
+    assert json.loads(result.output) == {"files": ["insider.json"]}
     assert refined["metadata"] == {
         "record": [
             "symbol",

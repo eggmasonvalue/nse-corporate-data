@@ -28,17 +28,18 @@
       "xbrlUrl"
     ],
     "xbrl": [
+      "Allottees domain",
       "Category of allotees",
       "Corporate identity number",
-      "Date of BID closing",
-      "Date of BID opening",
       "Date of allotment of shares",
+      "Date of bidclosing",
+      "Date of bidopening",
       "Date of submission",
       "Discount per shares availed",
       "Final amount of issue size",
       "ISIN",
       "Issue price per unit",
-      "MSEI symbol",
+      "Measure",
       "Minimum issue price per unit",
       "NSE symbol",
       "Name of allottees",
@@ -96,6 +97,20 @@
       ],
       "xbrl": [
         [
+          "AllotteesDomain1",
+          "AllotteesDomain1",
+          "AllotteesDomain2",
+          "AllotteesDomain2",
+          "AllotteesDomain3",
+          "AllotteesDomain3",
+          "AllotteesDomain4",
+          "AllotteesDomain4",
+          "AllotteesDomain5",
+          "AllotteesDomain5",
+          "AllotteesDomain6",
+          "AllotteesDomain6"
+        ],
+        [
           "Foreign Portfolio Investor",
           "Foreign Portfolio Investor",
           "Foreign Portfolio Investor",
@@ -104,15 +119,21 @@
           "Alternative Investment Fund"
         ],
         "L45200PB2005PLC028466",
+        "2026-03-10",
         "2026-03-09",
         "2026-03-04",
-        "2026-03-10",
         "2026-03-11",
         "9.83",
         "750000000",
         "INE976R01033",
         "265",
-        null,
+        [
+          "xbrli:shares",
+          "xbrli:pure",
+          "iso4217:INR",
+          "xbrli:shares",
+          "iso4217:INR"
+        ],
         "274.83",
         "AGIIL",
         [
@@ -146,130 +167,19 @@
         "2026-03-02",
         "539042"
       ],
+      "marketData": [
+        311.7,
+        124997388,
+        9412100795.63,
+        "45.63",
+        322.4,
+        137
+      ],
       "industry": [
         "Consumer Discretionary",
         "Realty",
         "Realty",
         "Residential, Commercial Projects"
-      ],
-      "marketData": [
-        306.3,
-        124997388,
-        9271666755.2,
-        "44.81",
-        321,
-        137
-      ]
-    },
-    {
-      "api": [
-        "66677",
-        "02-MAR-2026",
-        "E2E NETWORKS LIMITED",
-        "L72900DL2009PLC341980",
-        "04-MAR-2026",
-        "27-FEB-2026",
-        "04-MAR-2026",
-        "130.6",
-        "26-FEB-2026",
-        "26-FEB-2026",
-        "25-FEB-2026",
-        "1070000000",
-        "INE255Z01019",
-        "2500",
-        "QIP",
-        "2499.07",
-        "10",
-        "428000",
-        "428000",
-        "E2E",
-        "25-FEB-2026",
-        null,
-        "Listing Stage",
-        "17.08 KB",
-        "https://nsearchives.nseindia.com/corporate/xbrl/QIP_LS_1630832_27022026032026_WEB.xml"
-      ],
-      "xbrl": [
-        [
-          "Foreign Portfolio Investor",
-          "Foreign Portfolio Investor",
-          "Mutual fund",
-          "Mutual fund",
-          "Mutual fund",
-          "Mutual fund",
-          "Alternative Investment Fund",
-          "Alternative Investment Fund",
-          "Alternative Investment Fund",
-          "Mutual fund"
-        ],
-        "L72900DL2009PLC341980",
-        "2026-02-26",
-        "2026-02-25",
-        "2026-02-26",
-        "2026-02-27",
-        "130.6",
-        "1070000000",
-        "INE255Z01019",
-        "2500",
-        "NOTLISTED",
-        "2499.07",
-        "E2E",
-        [
-          "JETHA GLOBAL MASTER FUND",
-          "MERCURY SERIES UNION MID AND SMALL CAP FUND",
-          "BANDHAN LARGE & MID CAP FUND",
-          "BANDHAN AGGRESSIVE HYBRID FUND",
-          "BANDHAN SMALL CAP FUND",
-          "BANDHAN INNOVATION FUND",
-          "ALCHEMY LONG TERM VENTURES FUND, SERIES 2",
-          "NIVESHAAY HEDGEHOGS FUND",
-          "NIVESHAAY SAMBHAV FUND",
-          "UNION FLEXI CAP FUND"
-        ],
-        "E2E NETWORKS LIMITED",
-        "10",
-        "428000",
-        [
-          "428000",
-          "80000",
-          "20000",
-          "58000",
-          "6000",
-          "80000",
-          "24000",
-          "40000",
-          "40000",
-          "40000",
-          "40000"
-        ],
-        [
-          "0.1869",
-          "0.0467",
-          "0.1355",
-          "0.014",
-          "0.1869",
-          "0.0561",
-          "0.0935",
-          "0.0935",
-          "0.0935",
-          "0.0935"
-        ],
-        "2026-02-25",
-        "000000"
-      ],
-      "industry": [
-        "Information Technology",
-        "Information Technology",
-        "IT - Services",
-        "IT Enabled Services"
-      ],
-      "marketData": [
-        2285.1,
-        20554989,
-        18901862231.67,
-        null,
-        3894.7,
-        1732.1
       ]
     }
   ]

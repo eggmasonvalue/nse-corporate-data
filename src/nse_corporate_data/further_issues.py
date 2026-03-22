@@ -2,10 +2,10 @@ from typing import Any, Dict, List, Mapping, Sequence
 
 from nse_corporate_data.refine import RefinedField, build_refined_output
 
-DEFAULT_PREF_FULL_OUTPUT = "pref_data.json"
-DEFAULT_PREF_REFINED_OUTPUT = "pref_refined.json"
-DEFAULT_QIP_FULL_OUTPUT = "qip_data.json"
-DEFAULT_QIP_REFINED_OUTPUT = "qip_refined.json"
+DEFAULT_PREF_FULL_OUTPUT = "pref_raw.json"
+DEFAULT_PREF_REFINED_OUTPUT = "pref.json"
+DEFAULT_QIP_FULL_OUTPUT = "qip_raw.json"
+DEFAULT_QIP_REFINED_OUTPUT = "qip.json"
 
 PREF_API_LABELS = {
     "amountRaised": "amountRaised",

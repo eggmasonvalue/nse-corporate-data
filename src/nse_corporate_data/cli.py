@@ -185,7 +185,7 @@ def fetch_further_issues(from_date, to_date, categories, enrich):
                 enrichments=enrich,
             )
 
-            output_filename = f"{cat.lower()}_data.json"
+            output_filename = f"{cat.lower()}_raw.json"
             save_to_json(parsed_records, output_filename)
             logger.info(f"Successfully saved {cat} data to {output_filename}")
             output_files.append(output_filename)

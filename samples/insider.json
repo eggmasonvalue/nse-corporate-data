@@ -1,0 +1,550 @@
+{
+  "metadata": {
+    "record": [
+      "symbol",
+      "company",
+      "transactionMode",
+      "tradeDate",
+      "transactionValue",
+      "pricePerShare",
+      "holdingDeltaPct"
+    ],
+    "industry": [
+      "Macro",
+      "Sector",
+      "Industry",
+      "Basic Industry"
+    ],
+    "marketData": [
+      "currentPrice",
+      "sharesOutstanding",
+      "freeFloatMarketCap",
+      "priceToEarnings",
+      "fiftyTwoWeekHigh",
+      "fiftyTwoWeekLow"
+    ],
+    "xbrl": []
+  },
+  "data": [
+    {
+      "record": [
+        "PARKHOTELS",
+        "Apeejay Surrendra Park Hotels Limited",
+        "Market Purchase",
+        "19-Mar-2026 to 20-Mar-2026",
+        2984367,
+        110.3604393166186,
+        0.012673506998590637
+      ],
+      "industry": [
+        "Consumer Discretionary",
+        "Consumer Services",
+        "Leisure Services",
+        "Hotels & Resorts"
+      ],
+      "marketData": [
+        108.47,
+        213374246,
+        7378275883.27,
+        "28.75",
+        173.2,
+        105.13
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "PARKHOTELS",
+        "Apeejay Surrendra Park Hotels Limited",
+        "Market Purchase",
+        "20-Mar-2026",
+        1988350,
+        109.25,
+        0.01
+      ],
+      "industry": [
+        "Consumer Discretionary",
+        "Consumer Services",
+        "Leisure Services",
+        "Hotels & Resorts"
+      ],
+      "marketData": [
+        108.47,
+        213374246,
+        7378275883.27,
+        "28.75",
+        173.2,
+        105.13
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "JARO",
+        "Jaro Institute of Technology Management and Research Limited",
+        "Market Purchase",
+        "20-Mar-2026",
+        27157748,
+        482.99331294017213,
+        0.2535495150935418
+      ],
+      "industry": [
+        "Consumer Discretionary",
+        "Consumer Services",
+        "Other Consumer Services",
+        "E-Learning"
+      ],
+      "marketData": [
+        486.15,
+        22176339,
+        1735194109.46,
+        null,
+        890,
+        386
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "GALLANTT",
+        "Gallantt Ispat Limited",
+        "Market Purchase",
+        "20-Mar-2026",
+        13465918,
+        552.9015807842333,
+        0.010094042030546589
+      ],
+      "industry": [
+        "Industrials",
+        "Capital Goods",
+        "Industrial Products",
+        "Iron & Steel Products"
+      ],
+      "marketData": [
+        555.95,
+        241280945,
+        18146392428.89,
+        "27.68",
+        802.25,
+        316.95
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "INNOMET",
+        "Innomet Advanced Materials Limited",
+        "Market Purchase",
+        "18-Mar-2026 to 20-Mar-2026",
+        960480,
+        72.76363636363637,
+        0.10200818569322831
+      ],
+      "industry": [
+        "Commodities",
+        "Metals & Mining",
+        "Diversified Metals",
+        "Diversified Metals"
+      ],
+      "marketData": [
+        74.35,
+        12940138,
+        417232492.77,
+        "41.98",
+        216,
+        63.15
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "INNOMET",
+        "Innomet Advanced Materials Limited",
+        "Market Purchase",
+        "18-Mar-2026 to 20-Mar-2026",
+        960480,
+        72.76363636363637,
+        0.10200818569322831
+      ],
+      "industry": [
+        "Commodities",
+        "Metals & Mining",
+        "Diversified Metals",
+        "Diversified Metals"
+      ],
+      "marketData": [
+        74.35,
+        12940138,
+        417232492.77,
+        "41.98",
+        216,
+        63.15
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "DOLLAR",
+        "Dollar Industries Limited",
+        "Market Purchase",
+        "20-Mar-2026",
+        7653300,
+        255.11,
+        0.05289501468012974
+      ],
+      "industry": [
+        "Consumer Discretionary",
+        "Textiles",
+        "Textiles & Apparels",
+        "Garments & Apparels"
+      ],
+      "marketData": [
+        260.05,
+        56716120,
+        4145310429.08,
+        "13.71",
+        429.9,
+        233.55
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "SINCLAIR",
+        "Sinclairs Hotels Limited",
+        "Market Purchase",
+        "19-Mar-2026 to 20-Mar-2026",
+        4352870,
+        75.16741784523994,
+        0.1129711275848615
+      ],
+      "industry": [
+        "Consumer Discretionary",
+        "Consumer Services",
+        "Leisure Services",
+        "Hotels & Resorts"
+      ],
+      "marketData": [
+        73.94,
+        51260000,
+        1389392482.68,
+        "27.96",
+        114.75,
+        68.82
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "PREMIERPOL",
+        "Premier Polyfilm Limited",
+        "Market Purchase",
+        "19-Mar-2026",
+        936627,
+        57.48999508961453,
+        0.0155543393451415
+      ],
+      "industry": [
+        "Industrials",
+        "Capital Goods",
+        "Industrial Products",
+        "Plastic Products - Industrial"
+      ],
+      "marketData": [
+        59.96,
+        104742475,
+        1829644675.67,
+        "20.91",
+        70.59,
+        38
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "PREMIERPOL",
+        "Premier Polyfilm Limited",
+        "Market Purchase",
+        "19-Mar-2026",
+        120855,
+        57.55,
+        0.002004917298354846
+      ],
+      "industry": [
+        "Industrials",
+        "Capital Goods",
+        "Industrial Products",
+        "Plastic Products - Industrial"
+      ],
+      "marketData": [
+        59.96,
+        104742475,
+        1829644675.67,
+        "20.91",
+        70.59,
+        38
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "SANSTAR",
+        "Sanstar Limited",
+        "Market Purchase",
+        "20-Mar-2026",
+        823355,
+        82.3355,
+        0.005487141569624282
+      ],
+      "industry": [
+        "Fast Moving Consumer Goods",
+        "Fast Moving Consumer Goods",
+        "Agricultural Food & other Products",
+        "Other Agricultural Products"
+      ],
+      "marketData": [
+        82.4,
+        182244250,
+        4432927758.72,
+        "76.88",
+        107.29,
+        79
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "GUJALKALI",
+        "Gujarat Alkalies and Chemicals Limited",
+        "Market Purchase",
+        "20-Mar-2026",
+        228288373,
+        495.91252769691965,
+        0.6267798804448081
+      ],
+      "industry": [
+        "Commodities",
+        "Chemicals",
+        "Chemicals & Petrochemicals",
+        "Commodity Chemicals"
+      ],
+      "marketData": [
+        538.25,
+        73445242,
+        10003367375.5,
+        "104.2",
+        698.4,
+        409.15
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "HINDCON",
+        "Hindcon Chemicals Limited",
+        "Market Purchase",
+        "19-Mar-2026",
+        56692,
+        18.897333333333332,
+        0.005860448080092791
+      ],
+      "industry": [
+        "Commodities",
+        "Chemicals",
+        "Chemicals & Petrochemicals",
+        "Specialty Chemicals"
+      ],
+      "marketData": [
+        18.29,
+        51190625,
+        291206441.67,
+        "33.33",
+        40.24,
+        18
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "DWARKESH",
+        "Dwarikesh Sugar Industries Limited",
+        "Market Purchase",
+        "20-Mar-2026",
+        494919,
+        39.59352,
+        0.00674576407839614
+      ],
+      "industry": [
+        "Fast Moving Consumer Goods",
+        "Fast Moving Consumer Goods",
+        "Agricultural Food & other Products",
+        "Sugar"
+      ],
+      "marketData": [
+        39.68,
+        185301470,
+        4238138766.45,
+        "35.31",
+        52.6,
+        32.13
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "NCLIND",
+        "NCL Industries Limited",
+        "Market Purchase",
+        "20-Mar-2026",
+        522283,
+        170.96006546644844,
+        0.006753949955331078
+      ],
+      "industry": [
+        "Commodities",
+        "Construction Materials",
+        "Cement & Cement Products",
+        "Cement & Cement Products"
+      ],
+      "marketData": [
+        169.8,
+        45232790,
+        4342972097.73,
+        "12.85",
+        239.39,
+        165.2
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "RILINFRA",
+        "Rachana Infrastructure Limited",
+        "Market Purchase",
+        "20-Mar-2026",
+        189250,
+        37.85,
+        0.026874496103198066
+      ],
+      "industry": [
+        "Industrials",
+        "Construction",
+        "Construction",
+        "Civil Construction"
+      ],
+      "marketData": [
+        37.75,
+        18605000,
+        237161845.77,
+        "15.52",
+        53.9,
+        27.6
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "RILINFRA",
+        "Rachana Infrastructure Limited",
+        "Market Purchase",
+        "20-Mar-2026",
+        598720,
+        37.42,
+        0.08599838753023381
+      ],
+      "industry": [
+        "Industrials",
+        "Construction",
+        "Construction",
+        "Civil Construction"
+      ],
+      "marketData": [
+        37.75,
+        18605000,
+        237161845.77,
+        "15.52",
+        53.9,
+        27.6
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "JSL",
+        "Jindal Stainless Limited",
+        "Market Purchase",
+        "17-Mar-2026 to 18-Mar-2026",
+        68852682,
+        724.7650736842105,
+        0.0115232584696908
+      ],
+      "industry": [
+        "Commodities",
+        "Metals & Mining",
+        "Ferrous Metals",
+        "Iron & Steel"
+      ],
+      "marketData": [
+        721.95,
+        824419588,
+        231785403931.12,
+        "19.85",
+        884,
+        496.6
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "SGIL",
+        "Synergy Green Industries Limited",
+        "Market Purchase",
+        "17-Mar-2026",
+        514539,
+        501.5,
+        0.006601042269832079
+      ],
+      "industry": [
+        "Industrials",
+        "Capital Goods",
+        "Industrial Products",
+        "Castings & Forgings"
+      ],
+      "marketData": [
+        500.65,
+        15543000,
+        2378871693,
+        "96.17",
+        633.25,
+        377.1
+      ],
+      "xbrl": []
+    },
+    {
+      "record": [
+        "SGIL",
+        "Synergy Green Industries Limited",
+        "Market Purchase",
+        "17-Mar-2026",
+        98440,
+        492.2,
+        0.001286752879109567
+      ],
+      "industry": [
+        "Industrials",
+        "Capital Goods",
+        "Industrial Products",
+        "Castings & Forgings"
+      ],
+      "marketData": [
+        500.65,
+        15543000,
+        2378871693,
+        "96.17",
+        633.25,
+        377.1
+      ],
+      "xbrl": []
+    }
+  ]
+}
