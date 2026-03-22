@@ -67,23 +67,38 @@ def test_parse_filings_data_supports_custom_symbol_and_xbrl_keys(tmp_path, monke
         fetcher=FakeFetcher(xml_path),
         symbol_keys=("symbol",),
         xbrl_keys=("xbrl",),
-        api_label_map={"acqMode": "transactionMode", "company": "company", "symbol": "symbol", "xbrl": "xbrlUrl"},
-        enable_xbrl_processing=True,
+        api_label_map={
+            "acqMode": "transactionMode",
+            "company": "company",
+            "symbol": "symbol",
+            "xbrl": "xbrlUrl",
+        },
+        enrichments=("xbrl",),
     )
 
-    assert result["metadata"]["api"] == ["transactionMode", "company", "symbol", "xbrlUrl"]
+    assert result["metadata"]["api"] == [
+        "transactionMode",
+        "company",
+        "symbol",
+        "xbrlUrl",
+    ]
     assert result["metadata"]["xbrl"] == ["Field A", "Field B"]
     assert result["data"] == [
         {
-            "api": ["Market Purchase", "Example Corp", "ABC", "https://example.com/it.xml"],
+            "api": [
+                "Market Purchase",
+                "Example Corp",
+                "ABC",
+                "https://example.com/it.xml",
+            ],
             "xbrl": ["value-a", "value-b"],
-            "industry": ["M", "S", "I", "B"],
-            "marketData": [123.45, 1000, 25000.0, "18.5", 150.0, 80.0],
         }
     ]
 
 
-def test_parse_filings_data_logs_and_continues_on_xbrl_parse_failure(tmp_path, monkeypatch):
+def test_parse_filings_data_logs_and_continues_on_xbrl_parse_failure(
+    tmp_path, monkeypatch
+):
     xml_path = tmp_path / "it.xml"
     xml_path.write_text("<xbrl />", encoding="utf-8")
 
@@ -104,7 +119,7 @@ def test_parse_filings_data_logs_and_continues_on_xbrl_parse_failure(tmp_path, m
         symbol_keys=("symbol",),
         xbrl_keys=("xbrl",),
         api_label_map={"company": "company", "symbol": "symbol", "xbrl": "xbrlUrl"},
-        enable_xbrl_processing=True,
+        enrichments=("xbrl",),
     )
 
     assert result["metadata"]["xbrl"] == []
@@ -133,11 +148,11 @@ def test_parse_filings_data_skips_xbrl_download_when_disabled(tmp_path, monkeypa
         symbol_keys=("symbol",),
         xbrl_keys=("xbrl",),
         api_label_map={"company": "company", "symbol": "symbol", "xbrl": "xbrlUrl"},
-        enable_xbrl_processing=False,
+        enrichments=(),
     )
 
     assert fetcher.download_calls == []
-    assert result["metadata"]["xbrl"] == []
+    assert "xbrl" not in result["metadata"]
 
 
 def test_extract_market_data_uses_price_fallback_when_close_is_zero():
@@ -155,7 +170,7 @@ def test_extract_market_data_uses_price_fallback_when_close_is_zero():
     ) == [42.75, 10, 100.0, "12.3", 50.0, 30.0]
 
 
-def test_parse_filings_data_skips_market_data_for_non_market_acq_modes(monkeypatch):
+def test_parse_filings_data_skips_market_data_when_not_enriched(monkeypatch):
     fetcher = FakeFetcher(Path("."))
 
     monkeypatch.setattr(parser_module, "parse_xbrl_file", lambda path: {})
@@ -171,9 +186,43 @@ def test_parse_filings_data_skips_market_data_for_non_market_acq_modes(monkeypat
         fetcher=fetcher,
         symbol_keys=("symbol",),
         xbrl_keys=("xbrl",),
-        api_label_map={"company": "company", "symbol": "symbol", "acqMode": "transactionMode"},
-        enable_xbrl_processing=False,
+        api_label_map={
+            "company": "company",
+            "symbol": "symbol",
+            "acqMode": "transactionMode",
+        },
+        enrichments=(),
     )
 
     assert fetcher.market_data_calls == []
-    assert result["data"][0]["marketData"] == [None, None, None, None, None, None]
+    assert "marketData" not in result["metadata"]
+    assert "marketData" not in result["data"][0]
+
+
+def test_parse_filings_data_includes_market_data_when_enriched(monkeypatch):
+    fetcher = FakeFetcher(Path("."))
+
+    monkeypatch.setattr(parser_module, "parse_xbrl_file", lambda path: {})
+
+    result = parser_module.parse_filings_data(
+        filings=[
+            {
+                "symbol": "ABC",
+                "company": "Example Corp",
+                "acqMode": "Gift",
+            }
+        ],
+        fetcher=fetcher,
+        symbol_keys=("symbol",),
+        xbrl_keys=("xbrl",),
+        api_label_map={
+            "company": "company",
+            "symbol": "symbol",
+            "acqMode": "transactionMode",
+        },
+        enrichments=("market-data",),
+    )
+
+    assert fetcher.market_data_calls == ["ABC"]
+    assert "marketData" in result["metadata"]
+    assert "marketData" in result["data"][0]

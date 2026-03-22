@@ -1,7 +1,6 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from types import SimpleNamespace
 
 from click.testing import CliRunner
 
@@ -118,7 +117,14 @@ def test_further_issues_fetch_filters_by_repeatable_category(monkeypatch, tmp_pa
     with runner.isolated_filesystem(temp_dir=tmp_path):
         result = runner.invoke(
             cli_module.cli,
-            ["further-issues", "fetch", "--from-date", "01-03-2026", "--category", "pref"],
+            [
+                "further-issues",
+                "fetch",
+                "--from-date",
+                "01-03-2026",
+                "--category",
+                "pref",
+            ],
         )
 
     assert result.exit_code == 0
@@ -160,11 +166,11 @@ def test_further_issues_fetch_rejects_inverted_date_range(monkeypatch, tmp_path)
     assert saved == []
 
 
-def test_further_issues_shorten_writes_expected_metadata(monkeypatch, tmp_path):
+def test_further_issues_refine_writes_expected_metadata(monkeypatch, tmp_path):
     runner = CliRunner()
 
     def fail_fetcher():
-        raise AssertionError("shorten should not instantiate NSEFetcher")
+        raise AssertionError("refine should not instantiate NSEFetcher")
 
     monkeypatch.setattr(cli_module, "NSEFetcher", fail_fetcher)
 
@@ -221,13 +227,13 @@ def test_further_issues_shorten_writes_expected_metadata(monkeypatch, tmp_path):
         input_path.write_text(json.dumps(full_output), encoding="utf-8")
         result = runner.invoke(
             cli_module.cli,
-            ["further-issues", "shorten"],
+            ["further-issues", "refine"],
         )
-        shortened = json.loads(Path("pref_short.json").read_text(encoding="utf-8"))
+        refined = json.loads(Path("pref_refined.json").read_text(encoding="utf-8"))
 
     assert result.exit_code == 0
-    assert json.loads(result.output) == {"files": ["pref_short.json"]}
-    assert shortened["metadata"] == {
+    assert json.loads(result.output) == {"files": ["pref_refined.json"]}
+    assert refined["metadata"] == {
         "record": [
             "symbol",
             "company",
@@ -248,8 +254,12 @@ def test_further_issues_shorten_writes_expected_metadata(monkeypatch, tmp_path):
             "fiftyTwoWeekHigh",
             "fiftyTwoWeekLow",
         ],
+        "xbrl": [
+            "Number of lock in shares",
+            "Period of lock in shares",
+        ],
     }
-    assert shortened["data"] == [
+    assert refined["data"] == [
         {
             "record": [
                 "ABC",
@@ -269,15 +279,16 @@ def test_further_issues_shorten_writes_expected_metadata(monkeypatch, tmp_path):
                 "Other Electrical Equipment",
             ],
             "marketData": [110, 1000, 25000, "18.5", 150, 80],
+            "xbrl": ["4", "Equity shares for 6 months"],
         }
     ]
 
 
-def test_qip_shorten_writes_expected_metadata(monkeypatch, tmp_path):
+def test_qip_refine_writes_expected_metadata(monkeypatch, tmp_path):
     runner = CliRunner()
 
     def fail_fetcher():
-        raise AssertionError("shorten should not instantiate NSEFetcher")
+        raise AssertionError("refine should not instantiate NSEFetcher")
 
     monkeypatch.setattr(cli_module, "NSEFetcher", fail_fetcher)
 
@@ -349,68 +360,13 @@ def test_qip_shorten_writes_expected_metadata(monkeypatch, tmp_path):
         input_path.write_text(json.dumps(full_output), encoding="utf-8")
         result = runner.invoke(
             cli_module.cli,
-            ["further-issues", "shorten", "--category", "qip"],
+            ["further-issues", "refine", "--category", "qip"],
         )
-        shortened = json.loads(Path("qip_short.json").read_text(encoding="utf-8"))
+        refined = json.loads(Path("qip_refined.json").read_text(encoding="utf-8"))
 
     assert result.exit_code == 0
-    assert json.loads(result.output) == {"files": ["qip_short.json"]}
-    assert shortened["metadata"] == {
-        "record": [
-            "symbol",
-            "company",
-            "allotmentDate",
-            "relevantDate",
-            "issueSize",
-            "issuePrice",
-            "minimumIssuePrice",
-            "discountPerShare",
-            "sharesAllotted",
-            "allotteeCount",
-            "revisedFlag",
-            "allotteeNames",
-            "allotteeCategories",
-            "allotteeSharesAllotted",
-            "allotteePctOfIssue",
-        ],
-        "industry": ["Macro", "Sector", "Industry", "Basic Industry"],
-        "marketData": [
-            "currentPrice",
-            "sharesOutstanding",
-            "freeFloatMarketCap",
-            "priceToEarnings",
-            "fiftyTwoWeekHigh",
-            "fiftyTwoWeekLow",
-        ],
-    }
-    assert shortened["data"] == [
-        {
-            "record": [
-                "QIPX",
-                "QIP Example Limited",
-                "10-MAR-2026",
-                "02-MAR-2026",
-                "750000000",
-                "265",
-                "274.83",
-                "9.83",
-                "2830188",
-                "2",
-                None,
-                ["Investor A", "Investor B"],
-                ["Foreign Portfolio Investor", "Alternative Investment Fund"],
-                ["660000", "2170188"],
-                ["0.2332", "0.7668"],
-            ],
-            "industry": [
-                "Consumer Discretionary",
-                "Realty",
-                "Realty",
-                "Residential, Commercial Projects",
-            ],
-            "marketData": [305, 124997388, 9199184669.82, "44.81", 321, 137],
-        }
-    ]
+    assert json.loads(result.output) == {"files": ["qip_refined.json"]}
+    assert "xbrl" in refined["metadata"]
 
 
 def test_insider_trading_fetch_uses_default_to_date(monkeypatch, tmp_path):
@@ -433,11 +389,6 @@ def test_insider_trading_fetch_uses_default_to_date(monkeypatch, tmp_path):
     monkeypatch.setattr(
         cli_module, "save_to_json", lambda data, output_path: saved.append(output_path)
     )
-    monkeypatch.setattr(
-        cli_module,
-        "get_settings",
-        lambda: SimpleNamespace(enable_insider_trading_xbrl=False),
-    )
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
         result = runner.invoke(
@@ -453,99 +404,16 @@ def test_insider_trading_fetch_uses_default_to_date(monkeypatch, tmp_path):
     assert fetchers[0].calls == [
         ("insider_trading", "18-09-2025", today),
     ]
-    assert parse_calls[0]["enable_xbrl_processing"] is False
+    assert parse_calls[0]["enrichments"] == ()
     assert [row["symbol"] for row in parse_calls[0]["filings"]] == ["ABC", "XYZ"]
     assert fetchers[0].closed is True
 
 
-def test_insider_trading_fetch_filters_by_mode(monkeypatch, tmp_path):
-    runner = CliRunner()
-    parse_calls = []
-
-    monkeypatch.setattr(cli_module, "NSEFetcher", DummyFetcher)
-    monkeypatch.setattr(
-        cli_module,
-        "parse_filings_data",
-        lambda **kwargs: parse_calls.append(kwargs) or EMPTY_PARSED,
-    )
-    monkeypatch.setattr(cli_module, "save_to_json", lambda data, output_path: None)
-    monkeypatch.setattr(
-        cli_module,
-        "get_settings",
-        lambda: SimpleNamespace(enable_insider_trading_xbrl=False),
-    )
-
-    with runner.isolated_filesystem(temp_dir=tmp_path):
-        result = runner.invoke(
-            cli_module.cli,
-            [
-                "insider-trading",
-                "fetch",
-                "--from-date",
-                "18-09-2025",
-                "--mode",
-                "market-buy",
-                "--mode",
-                "gift",
-            ],
-        )
-
-    assert result.exit_code == 0
-    assert [row["symbol"] for row in parse_calls[0]["filings"]] == ["ABC"]
-
-
-def test_insider_trading_fetch_help_lists_mode_choices(tmp_path):
-    runner = CliRunner()
-
-    with runner.isolated_filesystem(temp_dir=tmp_path):
-        result = runner.invoke(cli_module.cli, ["insider-trading", "fetch", "--help"])
-
-    assert result.exit_code == 0
-    assert "market-buy" in result.output
-    assert "market-sell" in result.output
-    assert "preferential-offer" in result.output
-    assert "--mode" in result.output
-
-
-def test_insider_trading_fetch_filters_by_single_mode(monkeypatch, tmp_path):
-    runner = CliRunner()
-    parse_calls = []
-
-    monkeypatch.setattr(cli_module, "NSEFetcher", DummyFetcher)
-    monkeypatch.setattr(
-        cli_module,
-        "parse_filings_data",
-        lambda **kwargs: parse_calls.append(kwargs) or EMPTY_PARSED,
-    )
-    monkeypatch.setattr(cli_module, "save_to_json", lambda data, output_path: None)
-    monkeypatch.setattr(
-        cli_module,
-        "get_settings",
-        lambda: SimpleNamespace(enable_insider_trading_xbrl=False),
-    )
-
-    with runner.isolated_filesystem(temp_dir=tmp_path):
-        result = runner.invoke(
-            cli_module.cli,
-            [
-                "insider-trading",
-                "fetch",
-                "--from-date",
-                "18-09-2025",
-                "--mode",
-                "market-buy",
-            ],
-        )
-
-    assert result.exit_code == 0
-    assert [row["symbol"] for row in parse_calls[0]["filings"]] == ["ABC"]
-
-
-def test_insider_trading_shorten_writes_expected_metadata(monkeypatch, tmp_path):
+def test_insider_trading_refine_writes_expected_metadata(monkeypatch, tmp_path):
     runner = CliRunner()
 
     def fail_fetcher():
-        raise AssertionError("shorten should not instantiate NSEFetcher")
+        raise AssertionError("refine should not instantiate NSEFetcher")
 
     monkeypatch.setattr(cli_module, "NSEFetcher", fail_fetcher)
 
@@ -561,8 +429,9 @@ def test_insider_trading_shorten_writes_expected_metadata(monkeypatch, tmp_path)
                 "transactionQuantity",
                 "transactionValue",
                 "symbol",
+                "transactionDirection",
+                "postTransactionSecurityType",
             ],
-            "xbrl": [],
             "industry": ["Macro", "Sector", "Industry", "Basic Industry"],
             "marketData": [
                 "currentPrice",
@@ -585,9 +454,15 @@ def test_insider_trading_shorten_writes_expected_metadata(monkeypatch, tmp_path)
                     "10",
                     "1000",
                     "ABC",
+                    "Buy",
+                    "Equity Shares",
                 ],
-                "xbrl": [],
-                "industry": ["Industrials", "Capital Goods", "Electrical Equipment", "Other Electrical Equipment"],
+                "industry": [
+                    "Industrials",
+                    "Capital Goods",
+                    "Electrical Equipment",
+                    "Other Electrical Equipment",
+                ],
                 "marketData": [95, 1000, 25000, "18.5", 150, 80],
             }
         ],
@@ -598,13 +473,15 @@ def test_insider_trading_shorten_writes_expected_metadata(monkeypatch, tmp_path)
         input_path.write_text(json.dumps(full_output), encoding="utf-8")
         result = runner.invoke(
             cli_module.cli,
-            ["insider-trading", "shorten"],
+            ["insider-trading", "refine", "--preset", "market"],
         )
-        shortened = json.loads(Path("insider_trading_short.json").read_text(encoding="utf-8"))
+        refined = json.loads(
+            Path("insider_trading_refined.json").read_text(encoding="utf-8")
+        )
 
     assert result.exit_code == 0
-    assert json.loads(result.output) == {"files": ["insider_trading_short.json"]}
-    assert shortened["metadata"] == {
+    assert json.loads(result.output) == {"files": ["insider_trading_refined.json"]}
+    assert refined["metadata"] == {
         "record": [
             "symbol",
             "company",
@@ -624,7 +501,7 @@ def test_insider_trading_shorten_writes_expected_metadata(monkeypatch, tmp_path)
             "fiftyTwoWeekLow",
         ],
     }
-    assert shortened["data"] == [
+    assert refined["data"] == [
         {
             "record": [
                 "ABC",

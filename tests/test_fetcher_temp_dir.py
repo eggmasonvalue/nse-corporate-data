@@ -47,8 +47,10 @@ def test_get_market_data_uses_fetcher_cache():
     fetcher = NSEFetcher.__new__(NSEFetcher)
     fetcher._market_data_cache = {}
     fetcher.nse = SimpleNamespace(
-        getDetailedScripData=lambda symbol, series="EQ": calls.append((symbol, series))
-        or {"equityResponse": [{"tradeInfo": {"lastPrice": 123.45}}]}
+        getDetailedScripData=lambda symbol, series="EQ": (
+            calls.append((symbol, series))
+            or {"equityResponse": [{"tradeInfo": {"lastPrice": 123.45}}]}
+        )
     )
 
     # Act

@@ -9,25 +9,23 @@ from typing import Any, Callable, Optional
 from nse_corporate_data.fetcher import NSEFetcher
 from nse_corporate_data.further_issues import (
     DEFAULT_PREF_FULL_OUTPUT,
-    DEFAULT_PREF_SHORT_OUTPUT,
-    build_pref_short_output,
+    DEFAULT_PREF_REFINED_OUTPUT,
+    build_pref_refined_output,
     DEFAULT_QIP_FULL_OUTPUT,
-    DEFAULT_QIP_SHORT_OUTPUT,
-    build_qip_short_output,
+    DEFAULT_QIP_REFINED_OUTPUT,
+    build_qip_refined_output,
     PREF_API_LABELS,
     QIP_API_LABELS,
 )
 from nse_corporate_data.insider import (
     DEFAULT_INSIDER_FULL_OUTPUT,
-    DEFAULT_INSIDER_MODES,
-    DEFAULT_INSIDER_SHORT_OUTPUT,
+    DEFAULT_INSIDER_REFINED_OUTPUT,
     INSIDER_API_LABELS,
-    INSIDER_MODES,
-    build_insider_short_output,
-    filter_insider_filings_by_mode,
+    INSIDER_PRESETS,
+    build_insider_refined_output,
+    filter_insider_filings_by_preset,
 )
 from nse_corporate_data.parser import parse_filings_data, save_to_json
-from nse_corporate_data.settings import get_settings
 
 # Configure silent execution by routing logs to a file
 logging.basicConfig(
@@ -38,6 +36,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 FURTHER_ISSUE_CATEGORIES = ("pref", "qip")
+ENRICHMENT_CHOICES = ("market-data", "industry", "xbrl")
 
 
 class LogWriter:
@@ -144,12 +143,20 @@ def further_issues():
     type=click.Choice(FURTHER_ISSUE_CATEGORIES, case_sensitive=False),
     help="Issue categories to fetch. Repeat the option to include multiple categories.",
 )
-def fetch_further_issues(from_date, to_date, categories):
+@click.option(
+    "--enrich",
+    "enrich",
+    multiple=True,
+    type=click.Choice(ENRICHMENT_CHOICES, case_sensitive=False),
+    help="Optional API enrichments. Repeat the option to include multiple enrichments.",
+)
+def fetch_further_issues(from_date, to_date, categories, enrich):
     """
-    Fetch corporate filings for selected further-issue categories within a date range and parse the XBRL contents.
+    Fetch corporate filings for selected further-issue categories within a date range.
 
     Returns a JSON object with the status and output details.
     """
+
     def work(fetcher: Optional[NSEFetcher]) -> dict[str, Any]:
         assert fetcher is not None
         validate_date_range(from_date, to_date)
@@ -168,13 +175,14 @@ def fetch_further_issues(from_date, to_date, categories):
             logger.info(f"Fetching data for {cat}")
             filings = fetcher.fetch_corporate_filings(cat, from_date, to_date)
             logger.info(f"Parsing {len(filings)} filings for {cat}")
+
             parsed_records = parse_filings_data(
                 filings=filings,
                 fetcher=fetcher,
                 symbol_keys=("nseSymbol", "nsesymbol"),
                 xbrl_keys=("xmlFileName",),
                 api_label_map=label_maps[cat],
-                enable_xbrl_processing=True,
+                enrichments=enrich,
             )
 
             output_filename = f"{cat.lower()}_data.json"
@@ -187,14 +195,14 @@ def fetch_further_issues(from_date, to_date, categories):
     execute_silently(work)
 
 
-@further_issues.command("shorten")
+@further_issues.command("refine")
 @click.option(
     "--category",
     "category",
     default="pref",
     show_default=True,
     type=click.Choice(FURTHER_ISSUE_CATEGORIES, case_sensitive=False),
-    help="Further-issue category to shorten.",
+    help="Further-issue category to refine.",
 )
 @click.option(
     "--input",
@@ -206,31 +214,31 @@ def fetch_further_issues(from_date, to_date, categories):
     "--output",
     "output_path",
     type=click.Path(dir_okay=False, path_type=Path),
-    help="Path for the shortened further-issue JSON artifact.",
+    help="Path for the refined further-issue JSON artifact.",
 )
-def shorten_further_issues(
+def refine_further_issues(
     category: str,
     input_path: Optional[Path],
     output_path: Optional[Path],
 ):
-    """Read a full further-issue artifact and emit a shortened JSON."""
+    """Read a full further-issue artifact and emit a refined JSON."""
 
     normalized_category = category.lower()
     builders = {
         "pref": (
-            build_pref_short_output,
+            build_pref_refined_output,
             Path(DEFAULT_PREF_FULL_OUTPUT),
-            Path(DEFAULT_PREF_SHORT_OUTPUT),
+            Path(DEFAULT_PREF_REFINED_OUTPUT),
             "preferential-issue",
         ),
         "qip": (
-            build_qip_short_output,
+            build_qip_refined_output,
             Path(DEFAULT_QIP_FULL_OUTPUT),
-            Path(DEFAULT_QIP_SHORT_OUTPUT),
+            Path(DEFAULT_QIP_REFINED_OUTPUT),
             "QIP",
         ),
     }
-    build_short_output_fn, default_input_path, default_output_path, label = builders[
+    build_refined_output_fn, default_input_path, default_output_path, label = builders[
         normalized_category
     ]
     resolved_input_path = input_path or default_input_path
@@ -239,14 +247,14 @@ def shorten_further_issues(
     def work(fetcher: Optional[NSEFetcher]) -> dict[str, Any]:
         del fetcher
         logger.info(
-            f"Shortening {label} data from {resolved_input_path} to {resolved_output_path}"
+            f"Refining {label} data from {resolved_input_path} to {resolved_output_path}"
         )
         with resolved_input_path.open("r", encoding="utf-8") as handle:
             full_output = json.load(handle)
-        shortened_output = build_short_output_fn(full_output)
-        save_to_json(shortened_output, str(resolved_output_path))
+        refined_output = build_refined_output_fn(full_output)
+        save_to_json(refined_output, str(resolved_output_path))
         logger.info(
-            f"Successfully saved shortened {label} data to {resolved_output_path}"
+            f"Successfully saved refined {label} data to {resolved_output_path}"
         )
         return {"files": [str(resolved_output_path)]}
 
@@ -274,31 +282,21 @@ def insider_trading():
     help="End date in DD-MM-YYYY format",
 )
 @click.option(
-    "--mode",
-    "modes",
+    "--enrich",
+    "enrich",
     multiple=True,
-    default=DEFAULT_INSIDER_MODES,
-    show_default=True,
-    type=click.Choice(INSIDER_MODES, case_sensitive=False),
-    help=(
-        "Filter insider trading records by canonical mode token. "
-        "Repeat the option to include multiple modes."
-    ),
+    type=click.Choice(ENRICHMENT_CHOICES, case_sensitive=False),
+    help="Optional API enrichments. Repeat the option to include multiple enrichments.",
 )
-def fetch_insider_trading(from_date, to_date, modes):
-    """Fetch insider trading disclosures and normalize the result into JSON."""
-    settings = get_settings()
+def fetch_insider_trading(from_date, to_date, enrich):
+    """Fetch all insider trading disclosures and normalize the result into JSON."""
 
     def work(fetcher: Optional[NSEFetcher]) -> dict[str, Any]:
         assert fetcher is not None
         validate_date_range(from_date, to_date)
-        logger.info(
-            f"Starting insider-trading command from {from_date} to {to_date}"
-        )
+        logger.info(f"Starting insider-trading fetch from {from_date} to {to_date}")
         filings = fetcher.fetch_insider_trading(from_date, to_date)
-        filings = filter_insider_filings_by_mode(
-            filings, tuple(mode.lower() for mode in modes)
-        )
+
         logger.info(f"Parsing {len(filings)} insider trading filings")
         parsed_records = parse_filings_data(
             filings=filings,
@@ -306,7 +304,7 @@ def fetch_insider_trading(from_date, to_date, modes):
             symbol_keys=("symbol",),
             xbrl_keys=("xbrl",),
             api_label_map=INSIDER_API_LABELS,
-            enable_xbrl_processing=settings.enable_insider_trading_xbrl,
+            enrichments=enrich,
         )
 
         output_filename = DEFAULT_INSIDER_FULL_OUTPUT
@@ -317,7 +315,7 @@ def fetch_insider_trading(from_date, to_date, modes):
     execute_silently(work)
 
 
-@insider_trading.command("shorten")
+@insider_trading.command("refine")
 @click.option(
     "--input",
     "input_path",
@@ -329,24 +327,34 @@ def fetch_insider_trading(from_date, to_date, modes):
 @click.option(
     "--output",
     "output_path",
-    default=DEFAULT_INSIDER_SHORT_OUTPUT,
+    default=DEFAULT_INSIDER_REFINED_OUTPUT,
     show_default=True,
     type=click.Path(dir_okay=False, path_type=Path),
-    help="Path for the shortened insider-trading JSON artifact.",
+    help="Path for the refined insider-trading JSON artifact.",
 )
-def shorten_insider_trading(input_path: Path, output_path: Path):
-    """Read a full insider-trading artifact and emit a shortened signal-focused JSON."""
+@click.option(
+    "--preset",
+    default="market",
+    show_default=True,
+    type=click.Choice(INSIDER_PRESETS, case_sensitive=False),
+    help="Filter records by a signal-focused preset.",
+)
+def refine_insider_trading(input_path: Path, output_path: Path, preset: str):
+    """Read a full insider-trading artifact and emit a refined signal-focused JSON based on a preset."""
 
     def work(fetcher: Optional[NSEFetcher]) -> dict[str, Any]:
         del fetcher
-        logger.info(f"Shortening insider-trading data from {input_path} to {output_path}")
+        logger.info(
+            f"Refining insider-trading data from {input_path} to {output_path} with preset {preset}"
+        )
         with input_path.open("r", encoding="utf-8") as handle:
             full_output = json.load(handle)
-        shortened_output = build_insider_short_output(full_output)
-        save_to_json(shortened_output, str(output_path))
-        logger.info(
-            f"Successfully saved shortened insider trading data to {output_path}"
-        )
+
+        filtered_output = filter_insider_filings_by_preset(full_output, preset)
+        refined_output = build_insider_refined_output(filtered_output)
+        save_to_json(refined_output, str(output_path))
+
+        logger.info(f"Successfully saved refined insider trading data to {output_path}")
         return {"files": [str(output_path)]}
 
     execute_silently(work, with_fetcher=False)

@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 from nse_xbrl_parser import parse_xbrl_file
 from nse_corporate_data.fetcher import MARKET_DATA_METADATA
 
@@ -8,14 +8,19 @@ logger = logging.getLogger(__name__)
 _MARKET_DATA_RELEVANT_ACQ_MODES = {"Market Purchase", "Market Sale"}
 
 
-def _empty_results() -> Dict[str, Any]:
+def _empty_results(enrichments: Sequence[str] = ()) -> Dict[str, Any]:
+    metadata: Dict[str, Any] = {
+        "api": [],
+    }
+    if "xbrl" in enrichments:
+        metadata["xbrl"] = []
+    if "industry" in enrichments:
+        metadata["industry"] = []
+    if "market-data" in enrichments:
+        metadata["marketData"] = MARKET_DATA_METADATA
+
     return {
-        "metadata": {
-            "api": [],
-            "xbrl": [],
-            "industry": [],
-            "marketData": MARKET_DATA_METADATA,
-        },
+        "metadata": metadata,
         "data": [],
     }
 
@@ -68,14 +73,14 @@ def parse_filings_data(
     symbol_keys: Iterable[str],
     xbrl_keys: Iterable[str],
     api_label_map: Optional[Mapping[str, str]] = None,
-    enable_xbrl_processing: bool = True,
+    enrichments: Sequence[str] = (),
 ) -> Dict[str, Any]:
     """
     Given a list of JSON payload items from NSE, extract metadata into a dict
     with "metadata" headers and normalized row data.
     """
     if not filings:
-        return _empty_results()
+        return _empty_results(enrichments)
 
     # Dynamically extract all unique API keys from NSE JSON payloads
     unique_api_keys = set()
@@ -101,7 +106,7 @@ def parse_filings_data(
         xbrl_url = _resolve_first(item, xbrl_keys)
         parsed_xbrl = {}
 
-        if enable_xbrl_processing and xbrl_url:
+        if "xbrl" in enrichments and xbrl_url:
             xml_path = fetcher.download_xbrl_file(xbrl_url)
             if xml_path and xml_path.exists():
                 try:
@@ -124,47 +129,47 @@ def parse_filings_data(
 
     # PASS 2: Construct metadata and flattened data arrays
     sorted_xbrl_keys = sorted(list(unique_xbrl_keys))
-    industry_data = fetcher.get_industry_data()
-    industry_metadata = industry_data.get("metadata", [])
-    industry_map = industry_data.get("data", {})
+
+    industry_metadata = []
+    industry_map = {}
+    if "industry" in enrichments:
+        industry_data = fetcher.get_industry_data()
+        industry_metadata = industry_data.get("metadata", [])
+        industry_map = industry_data.get("data", {})
+
+    metadata_dict = {"api": api_metadata}
+    if "xbrl" in enrichments:
+        metadata_dict["xbrl"] = sorted_xbrl_keys
+    if "industry" in enrichments:
+        metadata_dict["industry"] = industry_metadata
+    if "market-data" in enrichments:
+        metadata_dict["marketData"] = MARKET_DATA_METADATA
 
     results = {
-        "metadata": {
-            "api": api_metadata,
-            "xbrl": sorted_xbrl_keys,
-            "industry": industry_metadata,
-            "marketData": MARKET_DATA_METADATA,
-        },
+        "metadata": metadata_dict,
         "data": [],
     }
 
     for rec in records:
         symbol = rec["symbol"]
-        source_item = rec["source_item"]
-        xbrl_values = [rec["xbrl_dict"].get(k) for k in sorted_xbrl_keys]
 
-        market_data_values = [None] * len(MARKET_DATA_METADATA)
-        acq_mode = source_item.get("acqMode")
-        if symbol != "UNKNOWN" and acq_mode in _MARKET_DATA_RELEVANT_ACQ_MODES:
-            detailed_data = fetcher.get_market_data(symbol)
-            if detailed_data:
-                market_data_values = _extract_market_data(detailed_data)
-        elif symbol != "UNKNOWN" and "acqMode" not in source_item:
-            detailed_data = fetcher.get_market_data(symbol)
-            if detailed_data:
-                market_data_values = _extract_market_data(detailed_data)
+        row_dict = {"api": rec["base_row"]}
 
-        # Get industry data for this symbol
-        industry_values = industry_map.get(symbol, [])
+        if "xbrl" in enrichments:
+            row_dict["xbrl"] = [rec["xbrl_dict"].get(k) for k in sorted_xbrl_keys]
 
-        results["data"].append(
-            {
-                "api": rec["base_row"],
-                "xbrl": xbrl_values,
-                "industry": industry_values,
-                "marketData": market_data_values,
-            }
-        )
+        if "market-data" in enrichments:
+            market_data_values = [None] * len(MARKET_DATA_METADATA)
+            if symbol != "UNKNOWN":
+                detailed_data = fetcher.get_market_data(symbol)
+                if detailed_data:
+                    market_data_values = _extract_market_data(detailed_data)
+            row_dict["marketData"] = market_data_values
+
+        if "industry" in enrichments:
+            row_dict["industry"] = industry_map.get(symbol, [])
+
+        results["data"].append(row_dict)
 
     return results
 

@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Mapping, Sequence
 
-from nse_corporate_data.shorten import ShortField, build_short_output
+from nse_corporate_data.refine import RefinedField, build_refined_output
 
 DEFAULT_PREF_FULL_OUTPUT = "pref_data.json"
-DEFAULT_PREF_SHORT_OUTPUT = "pref_short.json"
+DEFAULT_PREF_REFINED_OUTPUT = "pref_refined.json"
 DEFAULT_QIP_FULL_OUTPUT = "qip_data.json"
-DEFAULT_QIP_SHORT_OUTPUT = "qip_short.json"
+DEFAULT_QIP_REFINED_OUTPUT = "qip_refined.json"
 
 PREF_API_LABELS = {
     "amountRaised": "amountRaised",
@@ -58,44 +58,47 @@ QIP_API_LABELS = {
     "xmlFileName": "xbrlUrl",
 }
 
-PREF_SHORT_FIELDS: Sequence[ShortField] = (
-    ShortField("symbol", lambda context: context.get("symbol")),
-    ShortField("company", lambda context: context.get("company")),
-    ShortField(
+PREF_REFINED_FIELDS: Sequence[RefinedField] = (
+    RefinedField("symbol", lambda context: context.get("symbol")),
+    RefinedField("company", lambda context: context.get("company")),
+    RefinedField(
         "allotmentDate",
         lambda context: context.get("allotmentDate"),
     ),
-    ShortField(
+    RefinedField(
         "amountRaised",
         lambda context: context.get("amountRaised") or context.get("Amount raised"),
     ),
-    ShortField(
+    RefinedField(
         "sharesAllotted",
-        lambda context: context.get("sharesAllotted")
-        or context.get("Total number of shares allotted"),
+        lambda context: (
+            context.get("sharesAllotted")
+            or context.get("Total number of shares allotted")
+        ),
     ),
-    ShortField(
+    RefinedField(
         "offerPrice",
-        lambda context: context.get("offerPrice")
-        or context.get("Offer price per security"),
+        lambda context: (
+            context.get("offerPrice") or context.get("Offer price per security")
+        ),
     ),
-    ShortField(
+    RefinedField(
         "lockInShares",
         lambda context: context.get("Number of lock in shares"),
     ),
-    ShortField(
+    RefinedField(
         "lockInPeriod",
         lambda context: context.get("Period of lock in shares"),
     ),
-    ShortField("revisedFlag", lambda context: context.get("revisedFlag")),
+    RefinedField("revisedFlag", lambda context: context.get("revisedFlag")),
 )
 
 
-def build_pref_short_output(
+def build_pref_refined_output(
     full_output: Mapping[str, Any],
-    fields: Sequence[ShortField] = PREF_SHORT_FIELDS,
+    fields: Sequence[RefinedField] = PREF_REFINED_FIELDS,
 ) -> Dict[str, Any]:
-    return build_short_output(full_output, fields)
+    return build_refined_output(full_output, fields)
 
 
 def _normalize_allottee_list(value: Any) -> List[Any]:
@@ -111,67 +114,80 @@ def _qip_participant_shares(context: Mapping[str, Any]) -> List[Any]:
     no_of_allottees = context.get("allotteeCount")
 
     try:
-        expected_participants = int(no_of_allottees) if no_of_allottees is not None else None
+        expected_participants = (
+            int(no_of_allottees) if no_of_allottees is not None else None
+        )
     except (TypeError, ValueError):
         expected_participants = None
 
-    if expected_participants is not None and len(raw_values) == expected_participants + 1:
+    if (
+        expected_participants is not None
+        and len(raw_values) == expected_participants + 1
+    ):
         return raw_values[1:]
     return raw_values
 
 
-QIP_SHORT_FIELDS: Sequence[ShortField] = (
-    ShortField("symbol", lambda context: context.get("symbol")),
-    ShortField("company", lambda context: context.get("company")),
-    ShortField(
+QIP_REFINED_FIELDS: Sequence[RefinedField] = (
+    RefinedField("symbol", lambda context: context.get("symbol")),
+    RefinedField("company", lambda context: context.get("company")),
+    RefinedField(
         "allotmentDate",
-        lambda context: context.get("allotmentDate")
-        or context.get("Date of allotment of shares"),
+        lambda context: (
+            context.get("allotmentDate") or context.get("Date of allotment of shares")
+        ),
     ),
-    ShortField(
+    RefinedField(
         "relevantDate",
         lambda context: context.get("relevantDate") or context.get("Relavant date"),
     ),
-    ShortField(
+    RefinedField(
         "issueSize",
-        lambda context: context.get("issueSize")
-        or context.get("Final amount of issue size"),
+        lambda context: (
+            context.get("issueSize") or context.get("Final amount of issue size")
+        ),
     ),
-    ShortField(
+    RefinedField(
         "issuePrice",
-        lambda context: context.get("issuePrice")
-        or context.get("Issue price per unit"),
+        lambda context: (
+            context.get("issuePrice") or context.get("Issue price per unit")
+        ),
     ),
-    ShortField(
+    RefinedField(
         "minimumIssuePrice",
-        lambda context: context.get("minimumIssuePrice")
-        or context.get("Minimum issue price per unit"),
+        lambda context: (
+            context.get("minimumIssuePrice")
+            or context.get("Minimum issue price per unit")
+        ),
     ),
-    ShortField(
+    RefinedField(
         "discountPerShare",
-        lambda context: context.get("discountPerShare")
-        or context.get("Discount per shares availed"),
+        lambda context: (
+            context.get("discountPerShare")
+            or context.get("Discount per shares availed")
+        ),
     ),
-    ShortField(
+    RefinedField(
         "sharesAllotted",
         lambda context: context.get("sharesAllotted"),
     ),
-    ShortField(
+    RefinedField(
         "allotteeCount",
-        lambda context: context.get("allotteeCount")
-        or context.get("Number of allottees"),
+        lambda context: (
+            context.get("allotteeCount") or context.get("Number of allottees")
+        ),
     ),
-    ShortField("revisedFlag", lambda context: context.get("revisedFlag")),
-    ShortField(
+    RefinedField("revisedFlag", lambda context: context.get("revisedFlag")),
+    RefinedField(
         "allotteeNames",
         lambda context: _normalize_allottee_list(context.get("Name of allottees")),
     ),
-    ShortField(
+    RefinedField(
         "allotteeCategories",
         lambda context: _normalize_allottee_list(context.get("Category of allotees")),
     ),
-    ShortField("allotteeSharesAllotted", _qip_participant_shares),
-    ShortField(
+    RefinedField("allotteeSharesAllotted", _qip_participant_shares),
+    RefinedField(
         "allotteePctOfIssue",
         lambda context: _normalize_allottee_list(
             context.get("Percentage of total issue size")
@@ -180,8 +196,8 @@ QIP_SHORT_FIELDS: Sequence[ShortField] = (
 )
 
 
-def build_qip_short_output(
+def build_qip_refined_output(
     full_output: Mapping[str, Any],
-    fields: Sequence[ShortField] = QIP_SHORT_FIELDS,
+    fields: Sequence[RefinedField] = QIP_REFINED_FIELDS,
 ) -> Dict[str, Any]:
-    return build_short_output(full_output, fields)
+    return build_refined_output(full_output, fields)

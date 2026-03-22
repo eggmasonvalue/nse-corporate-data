@@ -1,39 +1,33 @@
 from decimal import Decimal, InvalidOperation
-from typing import Any, Dict, List, Mapping, Sequence
+from typing import Any, Dict, Mapping, Sequence
 
-from nse_corporate_data.shorten import ShortField, build_short_output
+from nse_corporate_data.refine import RefinedField, build_refined_output
 
-INSIDER_MODE_TO_ACQ_MODE = {
-    "unknown": ("-",),
-    "allotment": ("Allotment",),
-    "beneficiary-from-trusts": ("Beneficiary from Trusts",),
-    "block-deal": ("Block Deal",),
-    "bonus": ("Bonus",),
-    "buy-back": ("Buy Back",),
-    "conversion": ("Conversion of security",),
-    "esop": ("ESOP",),
-    "esos": ("ESOS",),
-    "gift": ("Gift",),
-    "inheritance": ("Inheritance",),
-    "inter-se-transfer": ("Inter-se-Transfer",),
-    "pledge-invoke": ("Invocation of pledge",),
-    "market": ("Market Purchase", "Market Sale"),
-    "market-buy": ("Market Purchase",),
-    "market-sell": ("Market Sale",),
-    "off-market": ("Off Market",),
-    "others": ("Others",),
-    "pledge-create": ("Pledge Creation",),
-    "preferential-offer": ("Preferential Offer",),
-    "public-right": ("Public Right",),
-    "pledge-release": ("Pledge Release",),
-    "pledge-revoke": ("Revocation of Pledge",),
-    "scheme": ("Scheme of Amalgamation/Merger/Demerger/Arrangement",),
-}
+BUY_PRESET_MODES = [
+    "Market Purchase",
+    "Preferential Offer",
+    "Allotment",
+    "Block Deal",
+    "Conversion of security",
+    "ESOP",
+    "ESOS",
+    "Public Right",
+    "Off Market",
+]
 
-INSIDER_MODES = tuple(INSIDER_MODE_TO_ACQ_MODE.keys())
-DEFAULT_INSIDER_MODES = ("market",)
+SELL_PRESET_MODES = [
+    "Market Sale",
+    "Block Deal",
+    "Off Market",
+    "ESOP",
+    "ESOS",
+    "Market Purchase",
+]
+# Note: "Invocation of pledge" is omitted from sell preset due to inconsistent data quality
+
+INSIDER_PRESETS = ("market", "buy", "sell")
 DEFAULT_INSIDER_FULL_OUTPUT = "insider_trading_data.json"
-DEFAULT_INSIDER_SHORT_OUTPUT = "insider_trading_short.json"
+DEFAULT_INSIDER_REFINED_OUTPUT = "insider_trading_refined.json"
 
 INSIDER_API_LABELS = {
     "acqMode": "transactionMode",
@@ -69,6 +63,7 @@ INSIDER_API_LABELS = {
     "xbrl": "xbrlUrl",
     "xbrlFileSize": "xbrlFileSize",
 }
+
 
 def _to_decimal(value: Any) -> Decimal | None:
     if value in (None, "", "-", "None"):
@@ -109,7 +104,9 @@ def _holding_delta_pct(context: Mapping[str, Any]) -> int | float | None:
     shares_out = _to_decimal(context.get("sharesOutstanding"))
 
     if before_shares is not None and after_shares is not None and shares_out:
-        return _coerce_number((after_shares - before_shares) / shares_out * Decimal("100"))
+        return _coerce_number(
+            (after_shares - before_shares) / shares_out * Decimal("100")
+        )
 
     before = _to_decimal(context.get("holdingBeforePct"))
     after = _to_decimal(context.get("holdingAfterPct"))
@@ -118,36 +115,56 @@ def _holding_delta_pct(context: Mapping[str, Any]) -> int | float | None:
     return _coerce_number(after - before)
 
 
-INSIDER_SHORT_FIELDS: Sequence[ShortField] = (
-    ShortField("symbol", lambda context: context.get("symbol")),
-    ShortField("company", lambda context: context.get("company")),
-    ShortField("transactionMode", lambda context: context.get("transactionMode")),
-    ShortField("tradeDate", _trade_date),
-    ShortField(
+INSIDER_REFINED_FIELDS: Sequence[RefinedField] = (
+    RefinedField("symbol", lambda context: context.get("symbol")),
+    RefinedField("company", lambda context: context.get("company")),
+    RefinedField("transactionMode", lambda context: context.get("transactionMode")),
+    RefinedField("tradeDate", _trade_date),
+    RefinedField(
         "transactionValue",
         lambda context: _coerce_number(_to_decimal(context.get("transactionValue"))),
     ),
-    ShortField("pricePerShare", _price_per_share),
-    ShortField("holdingDeltaPct", _holding_delta_pct),
+    RefinedField("pricePerShare", _price_per_share),
+    RefinedField("holdingDeltaPct", _holding_delta_pct),
 )
 
 
-def filter_insider_filings_by_mode(
-    filings: List[Dict[str, Any]], modes: tuple[str, ...]
-) -> List[Dict[str, Any]]:
-    if not modes:
-        return filings
-
-    allowed_modes = {
-        acq_mode
-        for mode in modes
-        for acq_mode in INSIDER_MODE_TO_ACQ_MODE[mode]
-    }
-    return [item for item in filings if item.get("acqMode") in allowed_modes]
-
-
-def build_insider_short_output(
-    full_output: Mapping[str, Any],
-    fields: Sequence[ShortField] = INSIDER_SHORT_FIELDS,
+def filter_insider_filings_by_preset(
+    data: Dict[str, Any], preset: str
 ) -> Dict[str, Any]:
-    return build_short_output(full_output, fields)
+    filtered_data = []
+    metadata = data.get("metadata", {})
+    api_fields = metadata.get("api", [])
+
+    for row in data.get("data", []):
+        context = dict(zip(api_fields, row.get("api", [])))
+        acq_mode = context.get("transactionMode")
+        direction = context.get("transactionDirection")
+        sec_type = context.get("postTransactionSecurityType")
+
+        if preset == "market":
+            if acq_mode in ["Market Purchase", "Market Sale"]:
+                filtered_data.append(row)
+        elif preset == "buy":
+            if (
+                direction == "Buy"
+                and sec_type == "Equity Shares"
+                and acq_mode in BUY_PRESET_MODES
+            ):
+                filtered_data.append(row)
+        elif preset == "sell":
+            if (
+                direction == "Sell"
+                and sec_type == "Equity Shares"
+                and acq_mode in SELL_PRESET_MODES
+            ):
+                filtered_data.append(row)
+
+    return {"metadata": metadata, "data": filtered_data}
+
+
+def build_insider_refined_output(
+    full_output: Mapping[str, Any],
+    fields: Sequence[RefinedField] = INSIDER_REFINED_FIELDS,
+) -> Dict[str, Any]:
+    return build_refined_output(full_output, fields)

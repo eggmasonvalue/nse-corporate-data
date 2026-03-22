@@ -76,9 +76,7 @@ class NSEFetcher:
         Dates should be in DD-MM-YYYY format.
         """
         url = f"https://www.nseindia.com/api/corporates-pit?index=equities&from_date={from_date}&to_date={to_date}"
-        referer = (
-            "https://www.nseindia.com/companies-listing/corporate-filings-insider-trading"
-        )
+        referer = "https://www.nseindia.com/companies-listing/corporate-filings-insider-trading"
         return self._fetch_json_rows(url, referer, "insider trading filings")
 
     def _fetch_json_rows(

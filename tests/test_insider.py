@@ -1,46 +1,56 @@
 from nse_corporate_data.insider import (
-    INSIDER_MODES,
-    INSIDER_MODE_TO_ACQ_MODE,
-    filter_insider_filings_by_mode,
+    INSIDER_PRESETS,
+    BUY_PRESET_MODES,
+    SELL_PRESET_MODES,
+    filter_insider_filings_by_preset,
 )
 
 
-def test_insider_mode_registry_covers_full_supported_acquisition_modes():
-    assert INSIDER_MODE_TO_ACQ_MODE["allotment"] == ("Allotment",)
-    assert INSIDER_MODE_TO_ACQ_MODE["beneficiary-from-trusts"] == (
-        "Beneficiary from Trusts",
-    )
-    assert INSIDER_MODE_TO_ACQ_MODE["block-deal"] == ("Block Deal",)
-    assert INSIDER_MODE_TO_ACQ_MODE["buy-back"] == ("Buy Back",)
-    assert INSIDER_MODE_TO_ACQ_MODE["esos"] == ("ESOS",)
-    assert INSIDER_MODE_TO_ACQ_MODE["inheritance"] == ("Inheritance",)
-    assert INSIDER_MODE_TO_ACQ_MODE["pledge-release"] == ("Pledge Release",)
-    assert INSIDER_MODE_TO_ACQ_MODE["pledge-revoke"] == ("Revocation of Pledge",)
-
-    assert "pledge-release" in INSIDER_MODES
-    assert "pledge-revoke" in INSIDER_MODES
+def test_insider_presets_registry_covers_supported_presets():
+    assert "market" in INSIDER_PRESETS
+    assert "buy" in INSIDER_PRESETS
+    assert "sell" in INSIDER_PRESETS
+    assert "Market Purchase" in BUY_PRESET_MODES
+    assert "Block Deal" in BUY_PRESET_MODES
+    assert "Market Sale" in SELL_PRESET_MODES
 
 
-def test_filter_insider_filings_by_mode_supports_new_acquisition_modes():
+def test_filter_insider_filings_by_preset_supports_presets():
+    metadata = {
+        "api": [
+            "transactionDirection",
+            "postTransactionSecurityType",
+            "transactionMode",
+            "symbol",
+        ]
+    }
     filings = [
-        {"symbol": "AAA", "acqMode": "Allotment"},
-        {"symbol": "BBB", "acqMode": "ESOS"},
-        {"symbol": "CCC", "acqMode": "Block Deal"},
-        {"symbol": "DDD", "acqMode": "Pledge Release"},
-        {"symbol": "EEE", "acqMode": "Revocation of Pledge"},
+        {"api": ["Buy", "Equity Shares", "Market Purchase", "AAA"]},
+        {"api": ["Sell", "Equity Shares", "Market Sale", "BBB"]},
+        {"api": ["Buy", "Equity Shares", "Block Deal", "CCC"]},
+        {"api": ["Sell", "Equity Shares", "ESOS", "DDD"]},
+        {
+            "api": ["Buy", "Warrants", "Market Purchase", "EEE"]
+        },  # Should be ignored by buy/sell preset
+        {
+            "api": ["Buy", "Equity Shares", "Inheritance", "FFF"]
+        },  # Should be ignored by buy/sell preset
     ]
+    data = {"metadata": metadata, "data": filings}
 
-    filtered = filter_insider_filings_by_mode(
-        filings,
-        ("allotment", "esos", "block-deal", "pledge-release", "pledge-revoke"),
-    )
+    filtered_market = filter_insider_filings_by_preset(data, "market")
+    assert [row["api"][-1] for row in filtered_market["data"]] == ["AAA", "BBB", "EEE"]
 
-    assert [row["symbol"] for row in filtered] == ["AAA", "BBB", "CCC", "DDD", "EEE"]
+    filtered_buy = filter_insider_filings_by_preset(data, "buy")
+    assert [row["api"][-1] for row in filtered_buy["data"]] == ["AAA", "CCC"]
+
+    filtered_sell = filter_insider_filings_by_preset(data, "sell")
+    assert [row["api"][-1] for row in filtered_sell["data"]] == ["BBB", "DDD"]
 
 
 def test_holding_delta_pct():
     from nse_corporate_data.insider import _holding_delta_pct
-    
+
     # Test new shares-based calculation
     context_shares = {
         "holdingBeforeShares": "1000",
@@ -50,13 +60,13 @@ def test_holding_delta_pct():
         "holdingAfterPct": "15.00",
     }
     assert _holding_delta_pct(context_shares) == 5.0
-    
+
     # Test fallback to pct-based calculation
     context_pct_only = {
         "holdingBeforePct": "10.00",
         "holdingAfterPct": "15.55",
     }
     assert _holding_delta_pct(context_pct_only) == 5.55
-    
+
     # Test missing data
     assert _holding_delta_pct({}) is None
