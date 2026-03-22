@@ -174,7 +174,7 @@ def filter_insider_filings_by_preset(
                 person = context.get("personName")
                 qty = context.get("transactionQuantity")
                 date = context.get("transactionStartDate")
-                
+
                 key = (symbol, person, qty, date)
                 if key not in seen_transactions:
                     filtered_data.append(row)

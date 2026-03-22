@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 import sys
 
+
 def run_command(cmd, cwd=None):
     print(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, cwd=cwd, text=True, capture_output=True)
@@ -42,11 +43,27 @@ def main():
     # 2. Refine Further Issues
     print("Refining Further Issues...")
     run_command(
-        ["uv", "run", "nse-corporate-data", "further-issues", "refine", "--category", "pref"],
+        [
+            "uv",
+            "run",
+            "nse-corporate-data",
+            "further-issues",
+            "refine",
+            "--category",
+            "pref",
+        ],
         cwd=samples_dir,
     )
     run_command(
-        ["uv", "run", "nse-corporate-data", "further-issues", "refine", "--category", "qip"],
+        [
+            "uv",
+            "run",
+            "nse-corporate-data",
+            "further-issues",
+            "refine",
+            "--category",
+            "qip",
+        ],
         cwd=samples_dir,
     )
 
@@ -76,11 +93,20 @@ def main():
     # 4. Refine Insider Trading (market preset)
     print("Refining Insider Trading...")
     run_command(
-        ["uv", "run", "nse-corporate-data", "insider-trading", "refine", "--preset", "market"],
+        [
+            "uv",
+            "run",
+            "nse-corporate-data",
+            "insider-trading",
+            "refine",
+            "--preset",
+            "market",
+        ],
         cwd=samples_dir,
     )
-    
+
     print("Sample generation complete.")
+
 
 if __name__ == "__main__":
     main()

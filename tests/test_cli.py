@@ -475,9 +475,7 @@ def test_insider_trading_refine_writes_expected_metadata(monkeypatch, tmp_path):
             cli_module.cli,
             ["insider-trading", "refine", "--preset", "market"],
         )
-        refined = json.loads(
-            Path("insider.json").read_text(encoding="utf-8")
-        )
+        refined = json.loads(Path("insider.json").read_text(encoding="utf-8"))
 
     assert result.exit_code == 0
     assert json.loads(result.output) == {"files": ["insider.json"]}
