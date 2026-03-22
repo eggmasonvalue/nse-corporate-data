@@ -1,54 +1,62 @@
 ---
 name: nse-corporate-data
-description: Fetch, process, and analyze National Stock Exchange (NSE) corporate disclosures, specifically further issues (preferential allotments, QIPs) and insider trading data. Make sure to use this skill whenever the user asks to research Indian stocks, analyze insider trading, check for preferential issues or QIPs, or work with NSE corporate filings.
+description: Fetch, process, and analyze National Stock Exchange (NSE) corporate disclosures, specifically further issues (preferential allotments, QIPs) and insider trading data. This skill is ESSENTIAL for any research on Indian stocks, analyzing insider trading activity, tracking institutional fundraising (QIPs), or investigating preferential allotments. Use this skill PROACTIVELY when the user mentions Indian equity markets, specific NSE-listed symbols, or corporate governance signals.
 ---
 
 # NSE Corporate Data Skill
 
-This skill enables you to autonomously fetch, process, and analyze corporate disclosures from the National Stock Exchange (NSE) of India using the local `nse-corporate-data` CLI tool.
+This skill enables you to autonomously fetch, process, and analyze corporate disclosures from the National Stock Exchange (NSE) of India using the `nse-corporate-data` CLI tool.
+
+## Core Capabilities
+1.  **Insider Trading**: Track purchases, sales, and pledge invocations by promoters and directors.
+2.  **Further Issues**: Monitor Qualified Institutional Placements (QIPs) and Preferential Allotments.
+3.  **Enrichment**: Automatically pull market caps, industries, and detailed XBRL-parsed data.
 
 ## Workflow for Fulfilling Requests
 
-When a user asks you to fetch or analyze NSE corporate data (e.g., "Check insider trading for last week", "Get recent QIPs"), follow this structured workflow:
-
-### 1. Prepare Parameters
-Determine the target date range. Dates MUST be formatted as `DD-MM-YYYY`. If the user provides informal dates (e.g., "last month", "since Monday"), calculate the exact dates yourself. If no end date is implied by the user, you can omit the `--to-date` argument (it defaults to today).
+### 1. Identify Parameters
+*   **Date Range**: Format dates as `DD-MM-YYYY`. 
+    *   Calculate exact dates for informal requests (e.g., "last 30 days").
+    *   `--from-date` is REQUIRED.
+    *   `--to-date` defaults to today if omitted.
+*   **Enrichment**: Decide if you need extra context. Use `--enrich` to add `market-data` (market cap/price), `industry`, or `xbrl` (detailed fields from filing).
 
 ### 2. Fetch the Data
-Execute the appropriate fetch command using `uv`. 
-*Note: The CLI is designed to be agent-friendly. It runs silently and only outputs a JSON summary (e.g., `{"files": [...]}`) to stdout. All detailed execution logs are diverted to `cli.log`.*
+Run the fetch command via `uv`. The tool runs silently, outputting a JSON summary to stdout and detailed logs to `cli.log`.
 
-**For Further Issues (Preferential Allotments & QIPs):**
+**Insider Trading:**
 ```bash
-uv run nse-corporate-data further-issues fetch --from-date DD-MM-YYYY [--to-date DD-MM-YYYY] [--category pref] [--category qip]
+uv run nse-corporate-data insider-trading fetch --from-date DD-MM-YYYY [--to-date DD-MM-YYYY] [--enrich market-data] [--enrich industry] [--enrich xbrl]
 ```
-*(Omit `--category` to fetch both).*
 
-**For Insider Trading:**
+**Further Issues (Preferential & QIP):**
 ```bash
-uv run nse-corporate-data insider-trading fetch --from-date DD-MM-YYYY [--to-date DD-MM-YYYY] [--mode market]
+uv run nse-corporate-data further-issues fetch --from-date DD-MM-YYYY [--to-date DD-MM-YYYY] [--category pref] [--category qip] [--enrich xbrl]
 ```
-*(Note: `--mode market` is the default and covers market purchases and sales. You can repeat the `--mode` flag to include others like `block-deal`, `preferential-offer`, `buy-back`, `esop`, etc.)*
 
-*Troubleshooting: If the fetch command outputs an `{"error": "..."}`, read the `cli.log` file to diagnose the issue.*
+*Note: If an error occurs, read `cli.log` for details.*
 
-### 3. Shorten the Data for Analysis
-The raw fetched artifacts (`pref_data.json`, `qip_data.json`, `insider_trading_data.json`) are deeply nested and large. **Always** run the shorten command to generate compact, LLM-friendly artifacts before you attempt to read or analyze the data.
+### 3. Refine for Analysis
+The raw artifacts (`insider_raw.json`, `pref_raw.json`, `qip_raw.json`) are often too large for context. **ALWAYS** run the `refine` command to create a compact, LLM-optimized JSON.
 
-**For Further Issues:**
+**Refine Insider Trading (with Presets):**
 ```bash
-uv run nse-corporate-data further-issues shorten --category pref
-uv run nse-corporate-data further-issues shorten --category qip
+uv run nse-corporate-data insider-trading refine [--preset market|market-buy|market-sell|buy|sell|forced-sales]
 ```
-*(Produces `pref_short.json` and `qip_short.json`)*
+*   `market`: (Default) Open market buys/sells.
+*   `forced-sales`: Pledge invocations (strong negative signal).
+*   `buy`/`sell`: Comprehensive list including ESOPs, allotments, etc.
 
-**For Insider Trading:**
+**Refine Further Issues:**
 ```bash
-uv run nse-corporate-data insider-trading shorten
+uv run nse-corporate-data further-issues refine --category pref
+uv run nse-corporate-data further-issues refine --category qip
 ```
-*(Produces `insider_trading_short.json`)*
 
 ### 4. Analyze and Present
-Read the resulting `*_short.json` file. These files are optimized for your context window and contain metadata-aligned arrays (e.g., separate `record`, `industry`, and `marketData` blocks).
+Read the refined artifacts (`insider.json`, `pref.json`, `qip.json`). These are structured to highlight the most important fields (e.g., `transactionValue`, `holdingDeltaPct`, `allotmentDate`).
 
-Synthesize the information intelligently based on the user's original request. Highlight key signals such as large transaction values, significant percentage changes in holdings, or notable market data context. Do not simply dump the raw JSON back to the user.
+**Analysis Guidelines:**
+*   **Insider Trading**: Look for clusters of buying/selling, large transaction values (relative to market cap if available), or "forced-sales" (pledge invocations).
+*   **Further Issues**: Check the issue price vs. current market price and the list of allottees (for QIPs) to identify institutional interest.
+*   **Synthesis**: Do not dump raw JSON. Provide a structured summary with clear signals.

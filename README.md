@@ -6,12 +6,12 @@ CLI tool for collecting NSE corporate data, downloading linked XBRL documents, a
 
 The project currently supports:
 
-- Further issue filings for preferential allotments (`PREF`)
-- Further issue filings for qualified institutional placements (`QIP`)
-- Preferential-issue short-form signal output derived from the full JSON (`further-issues shorten`)
-- QIP short-form debloated output derived from the full JSON (`further-issues shorten --category qip`)
+- Further-issue filings for preferential allotments (`PREF`)
+- Further-issue filings for qualified institutional placements (`QIP`)
+- Preferential-issue refined signal output derived from the full JSON (`further-issues refine`)
+- QIP refined debloated output derived from the full JSON (`further-issues refine --category qip`)
 - Insider trading disclosures (`insider-trading fetch`)
-- Insider trading short-form signal output derived from the full JSON (`insider-trading shorten`)
+- Insider trading refined signal output derived from the full JSON (`insider-trading refine`)
 
 For fetch workflows, the CLI:
 
@@ -22,9 +22,9 @@ For fetch workflows, the CLI:
 5. Fetches a compact market-data snapshot for stock symbols, currently limited to insider `acqMode` values `Market Purchase` and `Market Sale` for insider trading. Insider mode filtering itself supports the broader NSE acquisition-mode enum. Detailed scrip-data fetches retry across valid NSE series values (`EQ`, `BE`, `BZ`, `SM`, `ST`, `SZ`) when the initial response is structurally empty.
 6. Writes normalized JSON output files for downstream processing.
 
-For insider trading, the CLI also provides a pure local shortening step that reads the full insider artifact and emits a compact signal-focused JSON with only the most important fields for top-down analysis.
+For insider trading, the CLI also provides a pure local refinement step that reads the full insider artifact and emits a compact signal-focused JSON with only the most important fields for top-down analysis.
 
-For further issues, the CLI provides pure local shortening steps for both preferential allotments and QIPs. The preferential shortener reads `pref_data.json` and emits a compact JSON focused on amount raised, pricing, lock-in terms, revision lineage, and four-level industry context. The QIP shortener reads `qip_data.json` and emits a debloated issue-plus-allottee view that preserves pricing, size, revision lineage, investor participation detail, four-level industry context, and market data.
+For further issues, the CLI provides pure local refinement steps for both preferential allotments and QIPs. The preferential refiner reads `pref_raw.json` and emits a compact JSON focused on amount raised, pricing, lock-in terms, revision lineage, and four-level industry context. The QIP refiner reads `qip_raw.json` and emits a debloated issue-plus-allottee view that preserves pricing, size, revision lineage, investor participation detail, four-level industry context, and market data.
 
 For insider trading specifically, XBRL processing is configurable and disabled by default because the API payload is already rich enough for the current use case.
 
@@ -48,99 +48,84 @@ uv sync
 ### Further issues
 
 ```bash
-uv run nse-corporate-data further-issues fetch --from-date DD-MM-YYYY [--to-date DD-MM-YYYY] [--category pref|qip...]
+uv run nse-corporate-data further-issues fetch --from-date DD-MM-YYYY [--to-date DD-MM-YYYY] [--category pref|qip...] [--enrich market-data|industry|xbrl...]
 ```
 
 Example:
 
 ```bash
-uv run nse-corporate-data further-issues fetch --from-date 01-03-2026
+uv run nse-corporate-data further-issues fetch --from-date 01-03-2026 --enrich market-data --enrich industry
 ```
 
 Defaults:
 
 - `--to-date`: current local date when the command runs
 - `--category`: both `pref` and `qip`
+- `--enrich`: none
 
-### Further issue shorten
+### Further issue refine
 
 ```bash
-uv run nse-corporate-data further-issues shorten [--category pref|qip] [--input FILE] [--output FILE]
+uv run nse-corporate-data further-issues refine [--category pref|qip] [--input FILE] [--output FILE]
 ```
 
 Example:
 
 ```bash
-uv run nse-corporate-data further-issues shorten
-uv run nse-corporate-data further-issues shorten --category qip
+uv run nse-corporate-data further-issues refine
+uv run nse-corporate-data further-issues refine --category qip
 ```
 
 Defaults:
 
 - `--category`: `pref`
-- `--input`: `pref_data.json` for `pref`, `qip_data.json` for `qip`
-- `--output`: `pref_short.json` for `pref`, `qip_short.json` for `qip`
+- `--input`: `pref_raw.json` for `pref`, `qip_raw.json` for `qip`
+- `--output`: `pref.json` for `pref`, `qip.json` for `qip`
 
 ### Insider trading fetch
 
 ```bash
-uv run nse-corporate-data insider-trading fetch --from-date DD-MM-YYYY [--to-date DD-MM-YYYY] [--mode TOKEN...]
+uv run nse-corporate-data insider-trading fetch --from-date DD-MM-YYYY [--to-date DD-MM-YYYY] [--enrich market-data|industry|xbrl...]
 ```
 
 Example:
 
 ```bash
-uv run nse-corporate-data insider-trading fetch --from-date 18-09-2025
+uv run nse-corporate-data insider-trading fetch --from-date 18-09-2025 --enrich industry
 ```
-
-Supported insider mode tokens:
-
-- `allotment`: `Allotment`
-- `beneficiary-from-trusts`: `Beneficiary from Trusts`
-- `block-deal`: `Block Deal`
-- `market`: `Market Purchase` and `Market Sale`
-- `market-buy`: `Market Purchase`
-- `market-sell`: `Market Sale`
-- `buy-back`: `Buy Back`
-- `gift`: `Gift`
-- `bonus`: `Bonus`
-- `conversion`: `Conversion of security`
-- `esop`: `ESOP`
-- `esos`: `ESOS`
-- `inheritance`: `Inheritance`
-- `off-market`: `Off Market`
-- `inter-se-transfer`: `Inter-se-Transfer`
-- `pledge-create`: `Pledge Creation`
-- `pledge-invoke`: `Invocation of pledge`
-- `pledge-release`: `Pledge Release`
-- `pledge-revoke`: `Revocation of Pledge`
-- `preferential-offer`: `Preferential Offer`
-- `public-right`: `Public Right`
-- `scheme`: `Scheme of Amalgamation/Merger/Demerger/Arrangement`
-- `others`: `Others`
-- `unknown`: `-`
 
 Defaults:
 
-- `--mode`: `market`
-- Repeat `--mode` to include multiple tokens explicitly
+- `--to-date`: current local date when the command runs
+- `--enrich`: none
 
-### Insider trading shorten
+### Insider trading refine
 
 ```bash
-uv run nse-corporate-data insider-trading shorten [--input insider_trading_data.json] [--output insider_trading_short.json]
+uv run nse-corporate-data insider-trading refine [--input FILE] [--output FILE] [--preset PRESET]
 ```
 
 Example:
 
 ```bash
-uv run nse-corporate-data insider-trading shorten
+uv run nse-corporate-data insider-trading refine
+uv run nse-corporate-data insider-trading refine --preset market-buy
 ```
+
+Supported insider presets:
+
+- `market`: Market Purchase and Market Sale
+- `market-buy`: Market Purchase only
+- `market-sell`: Market Sale only
+- `buy`: Signal-focused buys including allotments and preferential offers
+- `sell`: Signal-focused sells
+- `forced-sales`: Pledged/invoked sales
 
 Defaults:
 
-- `--input`: `insider_trading_data.json`
-- `--output`: `insider_trading_short.json`
+- `--input`: `insider_raw.json`
+- `--output`: `insider.json`
+- `--preset`: `market`
 
 ### Configuration
 
@@ -159,12 +144,12 @@ Execution details are written to:
 
 Data files:
 
-- `pref_data.json`
-- `pref_short.json`
-- `qip_data.json`
-- `qip_short.json`
-- `insider_trading_data.json`
-- `insider_trading_short.json`
+- `pref_raw.json`
+- `pref.json`
+- `qip_raw.json`
+- `qip.json`
+- `insider_raw.json`
+- `insider.json`
 
 Output shape:
 
@@ -210,7 +195,7 @@ Output shape:
 - `priceToEarnings`: symbol PE ratio from NSE detailed scrip data
 - `fiftyTwoWeekHigh` / `fiftyTwoWeekLow`: 52-week range context
 
-Short insider-trading output shape:
+Refined insider-trading output shape:
 
 ```json
 {
@@ -244,9 +229,9 @@ Short insider-trading output shape:
 }
 ```
 
-The insider short artifact is driven by a declarative field list in `src/nse_corporate_data/insider.py`, so adding or removing metadata only requires editing that one registry.
+The insider refined artifact is driven by a declarative field list in `src/nse_corporate_data/insider.py`, so adding or removing metadata only requires editing that one registry.
 
-Short preferential-issue output shape:
+Refined preferential-issue output shape:
 
 ```json
 {
@@ -284,7 +269,7 @@ Short preferential-issue output shape:
 
 `revisedFlag` is intentionally preserved. When it is non-null, the filing may have a revised or duplicate lineage that downstream consumers may need to collapse explicitly.
 
-Short QIP output shape:
+Refined QIP output shape:
 
 ```json
 {
@@ -342,7 +327,7 @@ Short QIP output shape:
 }
 ```
 
-The QIP short artifact is driven by a declarative field list in `src/nse_corporate_data/further_issues.py`, so debloating or reintroducing metadata is a one-registry edit.
+The QIP refined artifact is driven by a declarative field list in `src/nse_corporate_data/further_issues.py`, so debloating or reintroducing metadata is a one-registry edit.
 
 ## Insider trading XBRL note
 
@@ -351,11 +336,11 @@ The insider trading workflow can download and parse linked XML through `nse-xbrl
 ## Project Structure
 
 - `src/nse_corporate_data/cli.py`: Click CLI entrypoint and input validation
-- `src/nse_corporate_data/further_issues.py`: preferential-issue and QIP short-output schemas
+- `src/nse_corporate_data/further_issues.py`: preferential-issue and QIP refined-output schemas
 - `src/nse_corporate_data/fetcher.py`: NSE session management, filing fetches, XBRL downloads
-- `src/nse_corporate_data/insider.py`: insider-mode mapping and shortened insider-output schema
+- `src/nse_corporate_data/insider.py`: insider-mode mapping and refined insider-output schema
 - `src/nse_corporate_data/parser.py`: XBRL parsing and JSON serialization
-- `src/nse_corporate_data/shorten.py`: shared helpers for metadata-driven local JSON shortening
+- `src/nse_corporate_data/refine.py`: shared helpers for metadata-driven local JSON refinement
 
 ## Testing
 
